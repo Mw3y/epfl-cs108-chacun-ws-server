@@ -108,6 +108,9 @@ public class WebSocketServer {
                             byte firstByte = buffer.get();
                             byte secondByte = buffer.get();
 
+                            System.out.println("opcode: " + getOpCodeBits(firstByte));
+                            int opCode = getOpCodeBits(firstByte);
+
                             // If the mask bit is not set, close the connection
                             if (!isMasked(secondByte)) {
                                 closeSocketChannel(socketChannel, key);
@@ -197,14 +200,14 @@ public class WebSocketServer {
      * If an unknown opcode is received, the receiving endpoint MUST Fail the
      * WebSocket Connection. The following values are defined.
      * <p>
-     * %x0 denotes a continuation frame
-     * %x1 denotes a text frame
-     * %x2 denotes a binary frame
-     * %x3-7 are reserved for further non-control frames
-     * %x8 denotes a connection close
-     * %x9 denotes a ping
-     * %xA denotes a pong
-     * %xB-F are reserved for further control frames
+     * %x0 denotes a continuation frame<br>
+     * %x1 denotes a text frame<br>
+     * %x2 denotes a binary frame<br>
+     * %x3-7 are reserved for further non-control frames<br>
+     * %x8 denotes a connection close<br>
+     * %x9 denotes a ping<br>
+     * %xA denotes a pong<br>
+     * %xB-F are reserved for further control frames<br>
      *
      * @param firstByte The first byte of a WebSocket frame.
      * @return The value of the opcode bits.
@@ -212,6 +215,18 @@ public class WebSocketServer {
     private static int getOpCodeBits(byte firstByte) {
         int OPCODE_MASK = (1 << 4) - 1;
         return firstByte & OPCODE_MASK;
+    }
+
+    /**
+     * Get the opcode from the first byte of a WebSocket frame.
+     * <p>
+     * Defines the interpretation of the "Payload data".
+     *
+     * @param firstByte The first byte of a WebSocket frame.
+     * @return The value of the opcode bits.
+     */
+    private static OpCode getOpCode(byte firstByte) {
+        return OpCode.fromValue(getOpCodeBits(firstByte));
     }
 
     /**
@@ -300,6 +315,29 @@ public class WebSocketServer {
         socketChannel.socket().close();
         socketChannel.close();
         key.cancel();
+    }
+
+    private enum OpCode {
+        CONTINUATION,
+        TEXT,
+        BINARY,
+        CLOSE,
+        PING,
+        PONG,
+        RESERVED;
+
+        public static OpCode fromValue(int value) {
+            return switch (value) {
+                case 0x0 -> CONTINUATION;
+                case 0x1 -> TEXT;
+                case 0x2 -> BINARY;
+                case 0x8 -> CLOSE;
+                case 0x9 -> PING;
+                case 0xA -> PONG;
+                default -> RESERVED;
+            };
+        }
+
     }
 }
 
