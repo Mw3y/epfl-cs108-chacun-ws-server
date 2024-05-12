@@ -76,7 +76,7 @@ public class WebSocketServer {
                     if (key.isReadable()) {
                         SocketChannel socketChannel = (SocketChannel) key.channel();
 
-                        ByteBuffer buffer = ByteBuffer.allocate(256);
+                        ByteBuffer buffer = ByteBuffer.allocate(2048);
                         socketChannel.read(buffer);
                         WebSocketData webSocketData = new WebSocketData(buffer);
 

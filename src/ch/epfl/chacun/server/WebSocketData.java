@@ -1,6 +1,7 @@
 package ch.epfl.chacun.server;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * Represents a RFC 6455 WebSocket data frame.
@@ -46,6 +47,18 @@ public final class WebSocketData {
      */
     public static final int DATA_MASK_SIZE = 4;
 
+    // Constants for bit manipulation
+    private static final int LENGTH_BITS = 7;
+    private static final int LENGTH_MASK = (1 << LENGTH_BITS) - 1;
+    private static final int IS_MASKED_POS = 7;
+    private static final int IS_MASKED_MASK = 1 << IS_MASKED_POS;
+    private static final int OPCODE_BITS = 4;
+    private static final int OPCODE_MASK = (1 << OPCODE_BITS) - 1;
+    private static final int RSV_BITS = 3;
+    private static final int FIRST_RSV_POS = 6;
+    private static final int FIN_BIT_POS = 7;
+    private static final int FIN_MASK = 1 << FIN_BIT_POS;
+
     /**
      * Constructs a WebSocketData object from a ByteBuffer.
      * @param buffer The ByteBuffer containing the WebSocket frame data.
@@ -58,6 +71,14 @@ public final class WebSocketData {
         // Read the first and second byte of the WebSocket frame which contains utility data
         firstByte = this.buffer.get();
         secondByte = this.buffer.get();
+        // Debug logs
+        System.out.println(Integer.toBinaryString(firstByte & 0xFF));
+        System.out.println(Integer.toBinaryString(secondByte & 0xFF));
+        System.out.println("getFinBit() = " + getFinBit());
+        System.out.println("getRSVBits() = " + Arrays.toString(getRSVBits()));
+        System.out.println("getOpCode() = " + getOpCode());
+        System.out.println("isMasked() = " + isMasked());
+        System.out.println("getLength() = " + getLength());
     }
 
     /**
@@ -85,6 +106,7 @@ public final class WebSocketData {
             return "";
         }
 
+        // TODO: Handle continuation frames
         byte[] dataBytes = new byte[getLength()];
         byte[] maskValue = new byte[DATA_MASK_SIZE];
         buffer.get(maskValue);
@@ -124,7 +146,6 @@ public final class WebSocketData {
      * @return The length of the payload data.
      */
     public int getLength() {
-        int LENGTH_MASK = (1 << 7) - 1;
         int length = secondByte & LENGTH_MASK;
         switch (length) {
             case 127 -> length = (int) buffer.getLong();
@@ -145,8 +166,7 @@ public final class WebSocketData {
      * @return The value of the mask bit.
      */
     public boolean isMasked() {
-        int MASK_MASK = 1 << (Byte.SIZE - 1);
-        return ((secondByte & MASK_MASK) >> (Byte.SIZE - 1)) == 1;
+        return ((secondByte & IS_MASKED_MASK) >> IS_MASKED_POS) == 1;
     }
 
 
@@ -171,7 +191,6 @@ public final class WebSocketData {
      * @return The value of the opcode bits.
      */
     public int getOpCodeBits() {
-        int OPCODE_MASK = (1 << 4) - 1;
         return firstByte & OPCODE_MASK;
     }
 
@@ -197,9 +216,9 @@ public final class WebSocketData {
      * @return The value of the RSV bits.
      */
     public int[] getRSVBits() {
-        int[] rsv = new int[3];
-        for (int i = 0; i < 3; i++) {
-            int shift = Byte.SIZE - 2 - i;
+        int[] rsv = new int[RSV_BITS];
+        for (int i = 0; i < rsv.length; i++) {
+            int shift = FIRST_RSV_POS - i;
             int mask = 1 << shift;
             rsv[i] = (firstByte & mask) >> shift;
         }
@@ -216,8 +235,7 @@ public final class WebSocketData {
      * @return The value of the FIN bit.
      */
     public int getFinBit() {
-        int FIN_MASK = 1 << (Byte.SIZE - 1);
-        return (firstByte & FIN_MASK) >> (Byte.SIZE - 1);
+        return (firstByte & FIN_MASK) >> FIN_BIT_POS;
     }
 
     /**
