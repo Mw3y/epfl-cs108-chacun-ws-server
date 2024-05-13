@@ -57,6 +57,11 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
 
                         ByteBuffer buffer = ByteBuffer.allocate(4096);
                         socketChannel.read(buffer);
+
+                        // for (byte b : buffer.array()) {
+                        //     System.out.print(Integer.toBinaryString(b & 0xFF).replace(' ', '0') + " ");
+                        // }
+
                         PayloadData webSocketData = new PayloadData(buffer);
 
                         String content = new String(buffer.array());

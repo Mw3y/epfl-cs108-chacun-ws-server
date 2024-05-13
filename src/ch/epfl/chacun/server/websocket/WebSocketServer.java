@@ -1,5 +1,9 @@
 package ch.epfl.chacun.server.websocket;
 
+import ch.epfl.chacun.server.rfc6455.TextEncoder;
+import org.w3c.dom.Text;
+
+import java.io.IOException;
 import java.nio.channels.SocketChannel;
 
 public class WebSocketServer extends AbstractWebSocketServer {
@@ -16,6 +20,11 @@ public class WebSocketServer extends AbstractWebSocketServer {
     @Override
     protected void onMessage(SocketChannel channel, String message) {
         System.out.println(message);
+        try {
+            channel.write(TextEncoder.encodeToPayload("Hello World"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

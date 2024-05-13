@@ -1,6 +1,7 @@
 package ch.epfl.chacun.server.rfc6455;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * Represents the payload data of a WebSocket frame.
@@ -66,11 +67,11 @@ public class PayloadData {
         // Read from the buffer until the data is available
         this.firstByte = buffer.get();
         this.secondByte = buffer.get();
-        this.isFinal = isFinal();
-        this.rsv = getRSVBits();
-        this.isMasked = isMasked();
-        this.opcode = getOpCode();
-        this.length = getLength();
+        this.isFinal = readIsFinal();
+        this.rsv = readRSVBits();
+        this.opcode = readOpCode();
+        this.isMasked = readIsMasked();
+        this.length = readLength();
         this.mask = isMasked ? new byte[DATA_MASK_SIZE] : null;
         if (isMasked) {
             buffer.get(mask);
@@ -133,7 +134,7 @@ public class PayloadData {
      *
      * @return The length of the payload data.
      */
-    private int getLength() {
+    private int readLength() {
         int length = secondByte & LENGTH_MASK;
         switch (length) {
             case 127 -> length = (int) buffer.getLong();
@@ -153,7 +154,7 @@ public class PayloadData {
      *
      * @return The value of the mask bit.
      */
-    private boolean isMasked() {
+    private boolean readIsMasked() {
         return ((secondByte & IS_MASKED_MASK) >> IS_MASKED_POS) == 1;
     }
 
@@ -178,7 +179,7 @@ public class PayloadData {
      *
      * @return The value of the opcode bits.
      */
-    private int getOpCodeBits() {
+    private int readOpCodeBits() {
         return firstByte & OPCODE_MASK;
     }
 
@@ -189,8 +190,8 @@ public class PayloadData {
      *
      * @return The value of the opcode bits.
      */
-    private OpCode getOpCode() {
-        return OpCode.fromValue(getOpCodeBits());
+    private OpCode readOpCode() {
+        return OpCode.fromValue(readOpCodeBits());
     }
 
     /**
@@ -204,7 +205,7 @@ public class PayloadData {
      *
      * @return The value of the RSV bits.
      */
-    private int[] getRSVBits() {
+    private int[] readRSVBits() {
         int[] rsv = new int[RSV_BITS];
         for (int i = 0; i < rsv.length; i++) {
             int shift = FIRST_RSV_POS - i;
@@ -223,7 +224,7 @@ public class PayloadData {
      *
      * @return The value of the FIN bit.
      */
-    private boolean isFinal() {
+    private boolean readIsFinal() {
         return (firstByte & FIN_MASK) >> FIN_BIT_POS == 1;
     }
 
@@ -231,24 +232,41 @@ public class PayloadData {
      * Represents the opcode of a WebSocket frame.
      */
     public enum OpCode {
-        CONTINUATION,
-        TEXT,
-        BINARY,
-        CLOSE,
-        PING,
-        PONG,
-        RESERVED;
+        CONTINUATION(0x0),
+        TEXT(0x1),
+        BINARY(0x2),
+        CLOSE(0x8),
+        PING(0x9),
+        PONG(0xA),
+        // 0xFF is a dummy value to represent reserved opcodes since it doesn't exist
+        RESERVED(0xFF);
 
+        private static final List<OpCode> ALL = List.of(values());
+        private final int value;
+
+        /**
+         * Create a new OpCode with the provided value.
+         * @param value The value of the OpCode.
+         */
+        OpCode(int value) {
+            this.value = value;
+        }
+
+        /**
+         * Get the value of the OpCode.
+         * @return The value of the OpCode.
+         */
+        public int value() {
+            return value;
+        }
+
+        /**
+         * Get the OpCode matching the provided value or RESERVED by default.
+         * @param value The value of the OpCode.
+         * @return The OpCode matching the provided value or RESERVED by default.
+         */
         public static OpCode fromValue(int value) {
-            return switch (value) {
-                case 0x0 -> CONTINUATION;
-                case 0x1 -> TEXT;
-                case 0x2 -> BINARY;
-                case 0x8 -> CLOSE;
-                case 0x9 -> PING;
-                case 0xA -> PONG;
-                default -> RESERVED;
-            };
+            return ALL.stream().filter(code -> code.value == value).findFirst().orElse(RESERVED);
         }
 
     }
