@@ -1,6 +1,5 @@
 package ch.epfl.chacun.server.websocket;
 
-import ch.epfl.chacun.server.GameWebSocket;
 import ch.epfl.chacun.server.rfc6455.PayloadData;
 import ch.epfl.chacun.server.rfc6455.RFC6455;
 
@@ -26,63 +25,11 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
      */
     private static final String GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
-    private boolean isRunning = true;
-
     private final int port;
+    private boolean isRunning = true;
 
     public AbstractWebSocketServer(int port) {
         this.port = port;
-    }
-
-    public void start() {
-        try (ServerSocketChannel serverSocketChannel = ServerSocketChannel.open()) {
-            serverSocketChannel.configureBlocking(false);
-            serverSocketChannel.bind(new InetSocketAddress(port));
-
-            Selector selector = Selector.open();
-            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-            while (isRunning) {
-                selector.select(1);
-                Iterator<SelectionKey> it = selector.selectedKeys().iterator();
-                while (it.hasNext()) {
-                    SelectionKey key = it.next();
-                    if (key.isAcceptable()) {
-                        SocketChannel channel = serverSocketChannel.accept();
-                        GameWebSocket gameWebSocket = new GameWebSocket(channel);
-                        if (channel != null) {
-                            channel.configureBlocking(false);
-                            channel.register(selector, SelectionKey.OP_READ);
-                            onOpen(gameWebSocket);
-                        }
-                    }
-                    if (key.isReadable()) {
-                        SocketChannel socketChannel = (SocketChannel) key.channel();
-
-                        ByteBuffer buffer = ByteBuffer.allocate(4096);
-                        socketChannel.read(buffer);
-
-                        // for (byte b : buffer.array()) {
-                        //     System.out.print(Integer.toBinaryString(b & 0xFF).replace(' ', '0') + " ");
-                        // }
-
-                        PayloadData webSocketData = RFC6455.parsePayload(buffer);
-
-                        String content = new String(buffer.array());
-                        if (content.startsWith("GET / HTTP/1.1")) {
-                            openingHandshake(content, socketChannel);
-                        }
-                        dispatch(webSocketData, socketChannel);
-                    }
-                    it.remove();
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    protected void stop() {
-        isRunning = false;
     }
 
     /**
@@ -121,17 +68,17 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
      * clients talking to that server. To this end, the WebSocket client's
      * handshake is an HTTP Upgrade request.
      *
-     * @param content       The content of the HTTP request.
-     * @param socketChannel The socket channel to write the handshake response to.
+     * @param content The content of the HTTP request.
+     * @param ws      The socket channel to write the handshake response to.
      * @throws IOException If the handshake response could not be written to the socket channel.
      */
-    private static void openingHandshake(String content, SocketChannel socketChannel) throws IOException {
+    private static void openingHandshake(String content, GameWebSocket ws) throws IOException {
         Pattern secWSKeyPattern = Pattern.compile("Sec-WebSocket-Key:\\s*(.*?)\r\n");
         Matcher secWSKeyMatcher = secWSKeyPattern.matcher(content);
 
         // If the Sec-WebSocket-Key header is not present, close the connection
         if (!secWSKeyMatcher.find()) {
-            closeSocketChannel(socketChannel);
+            ws.close();
             return;
         }
 
@@ -146,33 +93,70 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
         responseBuilder.add("Connection: Upgrade");
         responseBuilder.add("Sec-WebSocket-Accept: " + secWSAcceptHeader);
         responseBuilder.add("\r\n");
+
         // Send the handshake response
-        socketChannel.write(ByteBuffer.wrap(responseBuilder.toString().getBytes()));
+        ws.sendBytes(ByteBuffer.wrap(responseBuilder.toString().getBytes()));
     }
 
-    /**
-     * Close the socket channel and cancel the selection key.
-     *
-     * @param socketChannel The socket channel to close.
-     */
-    protected static void closeSocketChannel(SocketChannel socketChannel) {
-        try {
-            socketChannel.socket().close();
-            socketChannel.close();
-        } catch (IOException ignored) {
+    public void start() {
+        try (ServerSocketChannel serverSocketChannel = ServerSocketChannel.open()) {
+            serverSocketChannel.configureBlocking(false);
+            serverSocketChannel.bind(new InetSocketAddress(port));
+
+            Selector selector = Selector.open();
+            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+
+            /*
+             * The server will run until the stop method is called.
+             */
+            while (isRunning) {
+                selector.select(1);
+                Iterator<SelectionKey> it = selector.selectedKeys().iterator();
+                while (it.hasNext()) {
+                    SelectionKey key = it.next();
+                    if (key.isAcceptable()) {
+                        SocketChannel channel = serverSocketChannel.accept();
+                        GameWebSocket gameWebSocket = new GameWebSocket(channel);
+                        if (channel != null) {
+                            channel.configureBlocking(false);
+                            channel.register(selector, SelectionKey.OP_READ);
+                            onOpen(gameWebSocket);
+                        }
+                    }
+                    if (key.isReadable()) {
+                        SocketChannel socketChannel = (SocketChannel) key.channel();
+                        GameWebSocket gameWebSocket = new GameWebSocket(socketChannel);
+
+                        ByteBuffer buffer = ByteBuffer.allocate(4096);
+                        socketChannel.read(buffer);
+                        PayloadData webSocketData = RFC6455.parsePayload(buffer);
+                        String content = new String(buffer.array());
+                        if (content.startsWith("GET / HTTP/1.1")) {
+                            openingHandshake(content, gameWebSocket);
+                        }
+                        dispatch(webSocketData, gameWebSocket);
+                    }
+                    it.remove();
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
+    protected void stop() {
+        isRunning = false;
+    }
+
     @Override
-    public void dispatch(PayloadData payload, SocketChannel channel) {
-        GameWebSocket gameWebSocket = new GameWebSocket(channel);
+    public void dispatch(PayloadData payload, GameWebSocket ws) {
         switch (payload.opCode()) {
-            case TEXT -> onMessage(gameWebSocket, RFC6455.decodeText(payload));
-            case PING -> onPing(gameWebSocket);
-            case PONG -> onPong(gameWebSocket);
+            case TEXT -> onMessage(ws, RFC6455.decodeText(payload));
+            case PING -> onPing(ws);
+            case PONG -> onPong(ws);
             case CLOSE -> {
-                onClose(gameWebSocket);
-                closeSocketChannel(channel);
+                onClose(ws);
+                ws.close();
             }
         }
     }

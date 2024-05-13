@@ -1,4 +1,4 @@
-package ch.epfl.chacun.server;
+package ch.epfl.chacun.server.websocket;
 
 import ch.epfl.chacun.server.rfc6455.RFC6455;
 
@@ -15,18 +15,28 @@ public class GameWebSocket {
     }
 
     public boolean sendText(String message) {
-        return send(RFC6455.encodeText(message));
+        return sendBytes(RFC6455.encodeText(message));
     }
 
     public boolean sendPing() {
-        return send(RFC6455.PING);
+        return sendBytes(RFC6455.PING);
     }
 
     public boolean sendPong() {
-        return send(RFC6455.PONG);
+        return sendBytes(RFC6455.PONG);
     }
 
-    public boolean send(ByteBuffer buffer) {
+    public boolean close() {
+        try {
+            channel.socket().close();
+            channel.close();
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    public boolean sendBytes(ByteBuffer buffer) {
         try {
             channel.write(buffer);
             return true;

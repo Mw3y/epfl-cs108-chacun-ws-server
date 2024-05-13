@@ -1,9 +1,5 @@
 package ch.epfl.chacun.server.websocket;
 
-import ch.epfl.chacun.server.GameWebSocket;
-
-import java.io.IOException;
-
 public class WebSocketServer extends AbstractWebSocketServer {
 
     public WebSocketServer(int port) {

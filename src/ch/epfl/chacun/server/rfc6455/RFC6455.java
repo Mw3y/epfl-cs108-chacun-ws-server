@@ -42,7 +42,7 @@ public class RFC6455 {
     private static ByteBuffer encodeControlFrame(OpCode opCode) {
         ByteBuffer buffer = ByteBuffer.allocate(2);
         buffer.put((byte) (1 << FIN_BIT_POS | opCode.value()));
-        buffer.put((byte) 0);
+        buffer.put((byte) 0); // No mask and no payload data length
         buffer.flip();
         return buffer.asReadOnlyBuffer();
     }
