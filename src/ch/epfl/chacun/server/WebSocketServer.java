@@ -76,15 +76,15 @@ public class WebSocketServer {
                     if (key.isReadable()) {
                         SocketChannel socketChannel = (SocketChannel) key.channel();
 
-                        ByteBuffer buffer = ByteBuffer.allocate(2048);
+                        ByteBuffer buffer = ByteBuffer.allocate(4096);
                         socketChannel.read(buffer);
-                        WebSocketData webSocketData = new WebSocketData(buffer);
+                        PayloadData webSocketData = new PayloadData(buffer);
 
                         String content = new String(buffer.array());
                         if (content.startsWith("GET / HTTP/1.1")) {
                             openingHandshake(content, socketChannel, key);
                         } else {
-                            System.out.println(webSocketData.decodeText());
+                            System.out.println(webSocketData.decodeAsText());
                         }
 
                     }

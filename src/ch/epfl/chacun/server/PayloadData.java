@@ -1,46 +1,8 @@
 package ch.epfl.chacun.server;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
-/**
- * Represents a RFC 6455 WebSocket data frame.
- * <p>
- *  0                   1                   2                   3
- *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
- * +-+-+-+-+-------+-+-------------+-------------------------------+
- * |F|R|R|R| opcode|M| Payload len |    Extended payload length    |
- * |I|S|S|S|  (4)  |A|     (7)     |             (16/64)           |
- * |N|V|V|V|       |S|             |   (if payload len==126/127)   |
- * | |1|2|3|       |K|             |                               |
- * +-+-+-+-+-------+-+-------------+ - - - - - - - - - - - - - - - +
- * |     Extended payload length continued, if payload len == 127  |
- * + - - - - - - - - - - - - - - - +-------------------------------+
- * |                               |Masking-key, if MASK set to 1  |
- * +-------------------------------+-------------------------------+
- * | Masking-key (continued)       |          Payload Data         |
- * +-------------------------------- - - - - - - - - - - - - - - - +
- * :                     Payload Data continued ...                :
- * + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
- * |                     Payload Data continued ...                |
- * +---------------------------------------------------------------+
- */
-public final class WebSocketData {
-
-    /**
-     * The ByteBuffer containing the WebSocket frame data.
-     */
-    private final ByteBuffer buffer;
-
-    /**
-     * The first and second byte of a WebSocket frame.
-     */
-    private final byte firstByte, secondByte;
-
-    /**
-     * The index of the first data byte in a WebSocket frame.
-     */
-    public static final int FIRST_DATA_BYTE_INDEX = 2;
+public class PayloadData {
 
     /**
      * The size of the mask value in bytes.
@@ -59,67 +21,51 @@ public final class WebSocketData {
     private static final int FIN_BIT_POS = 7;
     private static final int FIN_MASK = 1 << FIN_BIT_POS;
 
-    /**
-     * Constructs a WebSocketData object from a ByteBuffer.
-     * @param buffer The ByteBuffer containing the WebSocket frame data.
-     */
-    public WebSocketData(ByteBuffer buffer) {
-        // Duplicate the buffer to prevent modifying the original buffer
-        this.buffer = buffer.duplicate();
-        // Flip the buffer to read from the beginning
+    private final ByteBuffer buffer;
+    private final byte firstByte;
+    private final byte secondByte;
+    private final boolean isFinal;
+    private final int length;
+    private final boolean isMasked;
+    private final OpCode opcode;
+    private final int[] rsv;
+    private final byte[] mask;
+    private final ByteBuffer data;
+
+    public PayloadData(ByteBuffer payloadBuffer) {
+        this.buffer = payloadBuffer.duplicate().asReadOnlyBuffer();
         this.buffer.flip();
-        // Read the first and second byte of the WebSocket frame which contains utility data
-        firstByte = this.buffer.get();
-        secondByte = this.buffer.get();
-        // Debug logs
-        System.out.println(Integer.toBinaryString(firstByte & 0xFF));
-        System.out.println(Integer.toBinaryString(secondByte & 0xFF));
-        System.out.println("getFinBit() = " + getFinBit());
-        System.out.println("getRSVBits() = " + Arrays.toString(getRSVBits()));
-        System.out.println("getOpCode() = " + getOpCode());
-        System.out.println("isMasked() = " + isMasked());
-        System.out.println("getLength() = " + getLength());
+        // Read from the buffer until the data is available
+        this.firstByte = buffer.get();
+        this.secondByte = buffer.get();
+        this.isFinal = isFinal();
+        this.rsv = getRSVBits();
+        this.isMasked = isMasked();
+        this.opcode = getOpCode();
+        this.length = getLength();
+        this.mask = isMasked ? new byte[DATA_MASK_SIZE] : null;
+        if (isMasked) {
+            buffer.get(mask);
+        }
+        // The data is the remaining bytes in the buffer
+        this.data = buffer.slice(buffer.position(), length);
     }
 
-    /**
-     * Returns a copy of the ByteBuffer containing the WebSocket frame data.
-     * @return A copy of the ByteBuffer containing the WebSocket frame data.
-     */
-    public ByteBuffer buffer() {
-        return buffer.duplicate();
-    }
-
-    /**
-     * Decodes the TEXT payload data from a WebSocket frame.
-     * @return The payload data as a string.
-     */
-    public String decodeText() {
-        if (getOpCode() != OpCode.TEXT) {
-            throw new IllegalStateException("Not a TEXT frame");
+    public String decodeAsText() {
+        if (isMasked) {
+            byte[] dataBytes = new byte[length];
+            // Apply the mask to retrieve the data
+            for (int i = 0; i < dataBytes.length; ++i) {
+                byte data = buffer.get();
+                dataBytes[i] = (byte) (data ^ mask[i % DATA_MASK_SIZE]);
+            }
+            // Reset the buffer position to the first data byte
+            // Allow the data to be read again
+            data.position(0);
+            // Convert the data to a string
+            return new String(dataBytes);
         }
-
-        if (!isMasked()) {
-            throw new IllegalStateException("Mask bit not set");
-        }
-
-        if (buffer.limit()  <= 0) {
-            return "";
-        }
-
-        // TODO: Handle continuation frames
-        byte[] dataBytes = new byte[getLength()];
-        byte[] maskValue = new byte[DATA_MASK_SIZE];
-        buffer.get(maskValue);
-        // Apply the mask to retrieve the data
-        for (int i = 0; i < dataBytes.length; ++i) {
-            byte data = buffer.get();
-            dataBytes[i] = (byte) (data ^ maskValue[i % DATA_MASK_SIZE]);
-        }
-        // Reset the buffer position to the first data byte
-        // Allow the data to be read again
-        buffer.position(FIRST_DATA_BYTE_INDEX);
-        // Convert the data to a string
-        return new String(dataBytes);
+        return new String(data.array());
     }
 
     /**
@@ -145,11 +91,11 @@ public final class WebSocketData {
      *
      * @return The length of the payload data.
      */
-    public int getLength() {
+    private int getLength() {
         int length = secondByte & LENGTH_MASK;
         switch (length) {
             case 127 -> length = (int) buffer.getLong();
-            case 126 -> length = buffer.getShort();
+            case 126 -> length = Short.toUnsignedInt(buffer.getShort());
         }
         return length;
     }
@@ -165,7 +111,7 @@ public final class WebSocketData {
      *
      * @return The value of the mask bit.
      */
-    public boolean isMasked() {
+    private boolean isMasked() {
         return ((secondByte & IS_MASKED_MASK) >> IS_MASKED_POS) == 1;
     }
 
@@ -190,7 +136,7 @@ public final class WebSocketData {
      *
      * @return The value of the opcode bits.
      */
-    public int getOpCodeBits() {
+    private int getOpCodeBits() {
         return firstByte & OPCODE_MASK;
     }
 
@@ -201,7 +147,7 @@ public final class WebSocketData {
      *
      * @return The value of the opcode bits.
      */
-    public OpCode getOpCode() {
+    private OpCode getOpCode() {
         return OpCode.fromValue(getOpCodeBits());
     }
 
@@ -215,7 +161,7 @@ public final class WebSocketData {
      * of such a nonzero value, the receiving endpoint MUST Fail the WebSocket Connection.
      * @return The value of the RSV bits.
      */
-    public int[] getRSVBits() {
+    private int[] getRSVBits() {
         int[] rsv = new int[RSV_BITS];
         for (int i = 0; i < rsv.length; i++) {
             int shift = FIRST_RSV_POS - i;
@@ -234,8 +180,8 @@ public final class WebSocketData {
      *
      * @return The value of the FIN bit.
      */
-    public int getFinBit() {
-        return (firstByte & FIN_MASK) >> FIN_BIT_POS;
+    private boolean isFinal() {
+        return (firstByte & FIN_MASK) >> FIN_BIT_POS == 1;
     }
 
     /**
@@ -263,4 +209,5 @@ public final class WebSocketData {
         }
 
     }
+
 }
