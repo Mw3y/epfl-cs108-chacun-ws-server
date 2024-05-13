@@ -1,4 +1,4 @@
-package ch.epfl.chacun.server;
+package ch.epfl.chacun.server.websocket;
 
 import ch.epfl.chacun.server.rfc6455.PayloadData;
 
@@ -17,7 +17,7 @@ import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class AbstractWebSocketServer implements WebSocketEventListener {
+public abstract class AbstractWebSocketServer extends WebSocketEventListener {
 
     /**
      * Globally Unique Identifier (GUID, [RFC4122]) in string form.
@@ -26,7 +26,13 @@ public abstract class AbstractWebSocketServer implements WebSocketEventListener 
 
     private boolean isRunning = true;
 
+    private final int port;
+
     public AbstractWebSocketServer(int port) {
+        this.port = port;
+    }
+
+    public void start() {
         try (ServerSocketChannel serverSocketChannel = ServerSocketChannel.open()) {
             serverSocketChannel.configureBlocking(false);
             serverSocketChannel.bind(new InetSocketAddress(port));
