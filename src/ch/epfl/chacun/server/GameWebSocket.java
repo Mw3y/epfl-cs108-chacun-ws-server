@@ -19,11 +19,11 @@ public class GameWebSocket {
     }
 
     public boolean sendPing() {
-        return send(RFC6455.encodePing());
+        return send(RFC6455.PING);
     }
 
     public boolean sendPong() {
-        return send(RFC6455.encodePong());
+        return send(RFC6455.PONG);
     }
 
     public boolean send(ByteBuffer buffer) {

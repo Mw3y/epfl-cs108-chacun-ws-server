@@ -24,14 +24,21 @@ public class RFC6455 {
     public static final int FIN_BIT_POS = 7;
     public static final int FIN_MASK = 1 << FIN_BIT_POS;
 
-    public static ByteBuffer encodePing() {
-        return encodeControlFrame(OpCode.PING);
-    }
+    /**
+     * PING control frame.
+     */
+    public static final ByteBuffer PING = encodeControlFrame(OpCode.PING);
 
-    public static ByteBuffer encodePong() {
-        return encodeControlFrame(OpCode.PONG);
-    }
-    
+    /**
+     * PONG control frame.
+     */
+    public static final ByteBuffer PONG = encodeControlFrame(OpCode.PONG);
+
+    /**
+     * Encodes a control frame with the provided opcode.
+     * @param opCode The opcode of the control frame.
+     * @return The ByteBuffer containing the control frame.
+     */
     private static ByteBuffer encodeControlFrame(OpCode opCode) {
         ByteBuffer buffer = ByteBuffer.allocate(2);
         buffer.put((byte) (1 << FIN_BIT_POS | opCode.value()));
@@ -40,6 +47,11 @@ public class RFC6455 {
         return buffer.asReadOnlyBuffer();
     }
 
+    /**
+     * Decodes a WebSocket frame into a string.
+     * @param payloadData The payload data of the WebSocket frame.
+     * @return The decoded string.
+     */
     public static String decodeText(PayloadData payloadData) {
         ByteBuffer data = payloadData.data();
         if (payloadData.isMasked()) {
@@ -58,6 +70,11 @@ public class RFC6455 {
         return new String(data.array());
     }
 
+    /**
+     * Extracts the data of a WebSocket frame.
+     * @param payload The payload data of the WebSocket frame.
+     * @return The parsed payload data.
+     */
     public static PayloadData parsePayload(ByteBuffer payload) {
         /*
          *  0                   1                   2                   3
