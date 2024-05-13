@@ -2,6 +2,9 @@ package ch.epfl.chacun.server.rfc6455;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Represents the payload data of a WebSocket frame.
+ */
 public class PayloadData {
 
     /**
@@ -27,17 +30,37 @@ public class PayloadData {
     private final boolean isFinal;
     private final int length;
     private final boolean isMasked;
-
-    public OpCode opCode() {
-        return opcode;
-    }
-
     private final OpCode opcode;
     private final int[] rsv;
     private final byte[] mask;
     private final ByteBuffer data;
 
+    /**
+     * Extracts data following RFC 6455 specs and creates a new PayloadData.
+     *
+     * @param payloadBuffer The buffer containing the payload data.
+     */
     public PayloadData(ByteBuffer payloadBuffer) {
+        /*
+         *  0                   1                   2                   3
+         *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+         * +-+-+-+-+-------+-+-------------+-------------------------------+
+         * |F|R|R|R| opcode|M| Payload len |    Extended payload length    |
+         * |I|S|S|S|  (4)  |A|     (7)     |             (16/64)           |
+         * |N|V|V|V|       |S|             |   (if payload len==126/127)   |
+         * | |1|2|3|       |K|             |                               |
+         * +-+-+-+-+-------+-+-------------+ - - - - - - - - - - - - - - - +
+         * |     Extended payload length continued, if payload len == 127  |
+         * + - - - - - - - - - - - - - - - +-------------------------------+
+         * |                               |Masking-key, if MASK set to 1  |
+         * +-------------------------------+-------------------------------+
+         * | Masking-key (continued)       |          Payload Data         |
+         * +-------------------------------- - - - - - - - - - - - - - - - +
+         * :                     Payload Data continued ...                :
+         * + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
+         * |                     Payload Data continued ...                |
+         * +---------------------------------------------------------------+
+         */
         this.buffer = payloadBuffer.duplicate().asReadOnlyBuffer();
         this.buffer.flip();
         // Read from the buffer until the data is available
@@ -56,6 +79,11 @@ public class PayloadData {
         this.data = buffer.slice(buffer.position(), length);
     }
 
+    /**
+     * Decodes the payload data as text.
+     *
+     * @return The payload data as text.
+     */
     public String decodeAsText() {
         if (isMasked) {
             byte[] dataBytes = new byte[length];
@@ -71,6 +99,15 @@ public class PayloadData {
             return new String(dataBytes);
         }
         return new String(data.array());
+    }
+
+    /**
+     * Get the opcode of the payload data.
+     *
+     * @return The opcode of the payload data.
+     */
+    public OpCode opCode() {
+        return opcode;
     }
 
     /**
@@ -164,6 +201,7 @@ public class PayloadData {
      * MUST be 0 unless an extension is negotiated that defines meanings for non-zero values.
      * If a nonzero value is received and none of the negotiated extensions defines the meaning
      * of such a nonzero value, the receiving endpoint MUST Fail the WebSocket Connection.
+     *
      * @return The value of the RSV bits.
      */
     private int[] getRSVBits() {
