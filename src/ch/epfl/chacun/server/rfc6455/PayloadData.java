@@ -1,4 +1,4 @@
-package ch.epfl.chacun.server;
+package ch.epfl.chacun.server.rfc6455;
 
 import java.nio.ByteBuffer;
 
@@ -27,6 +27,11 @@ public class PayloadData {
     private final boolean isFinal;
     private final int length;
     private final boolean isMasked;
+
+    public OpCode opCode() {
+        return opcode;
+    }
+
     private final OpCode opcode;
     private final int[] rsv;
     private final byte[] mask;
