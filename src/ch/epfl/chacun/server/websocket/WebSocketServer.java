@@ -1,10 +1,8 @@
 package ch.epfl.chacun.server.websocket;
 
-import ch.epfl.chacun.server.rfc6455.TextEncoder;
-import org.w3c.dom.Text;
+import ch.epfl.chacun.server.GameWebSocket;
 
 import java.io.IOException;
-import java.nio.channels.SocketChannel;
 
 public class WebSocketServer extends AbstractWebSocketServer {
 
@@ -13,32 +11,30 @@ public class WebSocketServer extends AbstractWebSocketServer {
     }
 
     @Override
-    protected void onOpen(SocketChannel channel) {
+    protected void onOpen(GameWebSocket ws) {
         System.out.println("Connection opened");
     }
 
     @Override
-    protected void onMessage(SocketChannel channel, String message) {
-        System.out.println(message);
-        try {
-            channel.write(TextEncoder.encodeToPayload("Hello World"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    protected void onMessage(GameWebSocket ws, String message) {
+        System.out.println("message.received: " + message);
+        ws.sendText("hello.world.from.server");
+        ws.sendPing();
     }
 
     @Override
-    protected void onPing(SocketChannel channel) {
+    protected void onPing(GameWebSocket ws) {
         System.out.println("Ping received");
+        ws.sendPong();
     }
 
     @Override
-    protected void onPong(SocketChannel channel) {
+    protected void onPong(GameWebSocket ws) {
         System.out.println("Pong received");
     }
 
     @Override
-    protected void onClose(SocketChannel channel) {
+    protected void onClose(GameWebSocket ws) {
         System.out.println("Connection closed");
     }
 }

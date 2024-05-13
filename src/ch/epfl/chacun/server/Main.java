@@ -1,6 +1,5 @@
 package ch.epfl.chacun.server;
 
-import ch.epfl.chacun.server.rfc6455.TextEncoder;
 import ch.epfl.chacun.server.websocket.WebSocketServer;
 
 public class Main {

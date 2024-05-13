@@ -1,5 +1,6 @@
 package ch.epfl.chacun.server.websocket;
 
+import ch.epfl.chacun.server.GameWebSocket;
 import ch.epfl.chacun.server.rfc6455.PayloadData;
 
 import java.nio.channels.SocketChannel;
@@ -14,7 +15,7 @@ public abstract class WebSocketEventListener {
      *
      * @param channel The channel of the new connection.
      */
-    abstract protected void onOpen(SocketChannel channel);
+    abstract protected void onOpen(GameWebSocket channel);
 
     /**
      * Called when a message is received.
@@ -22,28 +23,28 @@ public abstract class WebSocketEventListener {
      * @param channel The channel of the connection.
      * @param message The message received.
      */
-    abstract protected void onMessage(SocketChannel channel, String message);
+    abstract protected void onMessage(GameWebSocket channel, String message);
 
     /**
      * Called when a ping is received.
      *
      * @param channel The channel of the connection.
      */
-    abstract protected void onPing(SocketChannel channel);
+    abstract protected void onPing(GameWebSocket channel);
 
     /**
      * Called when a pong is received.
      *
      * @param channel The channel of the connection.
      */
-    abstract protected void onPong(SocketChannel channel);
+    abstract protected void onPong(GameWebSocket channel);
 
     /**
      * Called when a connection is closed.
      *
      * @param channel The channel of the connection.
      */
-    abstract protected void onClose(SocketChannel channel);
+    abstract protected void onClose(GameWebSocket channel);
 
     /**
      * Dispatches the payload data to the appropriate event handler.

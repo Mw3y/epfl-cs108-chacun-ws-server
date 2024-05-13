@@ -1,6 +1,8 @@
 package ch.epfl.chacun.server.websocket;
 
+import ch.epfl.chacun.server.GameWebSocket;
 import ch.epfl.chacun.server.rfc6455.PayloadData;
+import ch.epfl.chacun.server.rfc6455.RFC6455;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -46,10 +48,11 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
                     SelectionKey key = it.next();
                     if (key.isAcceptable()) {
                         SocketChannel channel = serverSocketChannel.accept();
+                        GameWebSocket gameWebSocket = new GameWebSocket(channel);
                         if (channel != null) {
                             channel.configureBlocking(false);
                             channel.register(selector, SelectionKey.OP_READ);
-                            onOpen(channel);
+                            onOpen(gameWebSocket);
                         }
                     }
                     if (key.isReadable()) {
@@ -62,7 +65,7 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
                         //     System.out.print(Integer.toBinaryString(b & 0xFF).replace(' ', '0') + " ");
                         // }
 
-                        PayloadData webSocketData = new PayloadData(buffer);
+                        PayloadData webSocketData = RFC6455.parsePayload(buffer);
 
                         String content = new String(buffer.array());
                         if (content.startsWith("GET / HTTP/1.1")) {
@@ -162,12 +165,13 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
 
     @Override
     public void dispatch(PayloadData payload, SocketChannel channel) {
+        GameWebSocket gameWebSocket = new GameWebSocket(channel);
         switch (payload.opCode()) {
-            case TEXT -> onMessage(channel, payload.decodeAsText());
-            case PING -> onPing(channel);
-            case PONG -> onPong(channel);
+            case TEXT -> onMessage(gameWebSocket, RFC6455.decodeText(payload));
+            case PING -> onPing(gameWebSocket);
+            case PONG -> onPong(gameWebSocket);
             case CLOSE -> {
-                onClose(channel);
+                onClose(gameWebSocket);
                 closeSocketChannel(channel);
             }
         }
