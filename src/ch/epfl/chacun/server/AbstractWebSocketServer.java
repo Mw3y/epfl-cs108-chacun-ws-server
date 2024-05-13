@@ -24,6 +24,8 @@ public abstract class AbstractWebSocketServer implements WebSocketEventListener 
      */
     private static final String GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
+    private boolean isRunning = true;
+
     public AbstractWebSocketServer(int port) {
         try (ServerSocketChannel serverSocketChannel = ServerSocketChannel.open()) {
             serverSocketChannel.configureBlocking(false);
@@ -31,7 +33,7 @@ public abstract class AbstractWebSocketServer implements WebSocketEventListener 
 
             Selector selector = Selector.open();
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-            while (true) {
+            while (isRunning) {
                 selector.select(1);
                 Iterator<SelectionKey> it = selector.selectedKeys().iterator();
                 while (it.hasNext()) {
@@ -41,6 +43,7 @@ public abstract class AbstractWebSocketServer implements WebSocketEventListener 
                         if (channel != null) {
                             channel.configureBlocking(false);
                             channel.register(selector, SelectionKey.OP_READ);
+                            onOpen(channel);
                         }
                     }
                     if (key.isReadable()) {
@@ -52,9 +55,9 @@ public abstract class AbstractWebSocketServer implements WebSocketEventListener 
 
                         String content = new String(buffer.array());
                         if (content.startsWith("GET / HTTP/1.1")) {
-                            openingHandshake(content, socketChannel, key);
+                            openingHandshake(content, socketChannel);
                         }
-                        dispatch(webSocketData);
+                        dispatch(webSocketData, socketChannel);
                     }
                     it.remove();
                 }
@@ -62,6 +65,10 @@ public abstract class AbstractWebSocketServer implements WebSocketEventListener 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    protected void stop() {
+        isRunning = false;
     }
 
     /**
@@ -102,16 +109,15 @@ public abstract class AbstractWebSocketServer implements WebSocketEventListener 
      *
      * @param content       The content of the HTTP request.
      * @param socketChannel The socket channel to write the handshake response to.
-     * @param key           The selection key of the socket channel.
      * @throws IOException If the handshake response could not be written to the socket channel.
      */
-    private static void openingHandshake(String content, SocketChannel socketChannel, SelectionKey key) throws IOException {
+    private static void openingHandshake(String content, SocketChannel socketChannel) throws IOException {
         Pattern secWSKeyPattern = Pattern.compile("Sec-WebSocket-Key:\\s*(.*?)\r\n");
         Matcher secWSKeyMatcher = secWSKeyPattern.matcher(content);
 
         // If the Sec-WebSocket-Key header is not present, close the connection
         if (!secWSKeyMatcher.find()) {
-            closeSocketChannel(socketChannel, key);
+            closeSocketChannel(socketChannel);
             return;
         }
 
@@ -134,22 +140,25 @@ public abstract class AbstractWebSocketServer implements WebSocketEventListener 
      * Close the socket channel and cancel the selection key.
      *
      * @param socketChannel The socket channel to close.
-     * @param key           The selection key to cancel.
-     * @throws IOException If the socket channel could not be closed.
      */
-    protected static void closeSocketChannel(SocketChannel socketChannel, SelectionKey key) throws IOException {
-        socketChannel.socket().close();
-        socketChannel.close();
-        key.cancel();
+    protected static void closeSocketChannel(SocketChannel socketChannel) {
+        try {
+            socketChannel.socket().close();
+            socketChannel.close();
+        } catch (IOException ignored) {
+        }
     }
 
     @Override
-    public void dispatch(PayloadData payload) {
+    public void dispatch(PayloadData payload, SocketChannel channel) {
         switch (payload.opCode()) {
-            case TEXT -> onMessage(payload.decodeAsText());
-            case PING -> onPing();
-            case PONG -> onPong();
-            case CLOSE -> onClose();
+            case TEXT -> onMessage(channel, payload.decodeAsText());
+            case PING -> onPing(channel);
+            case PONG -> onPong(channel);
+            case CLOSE -> {
+                onClose(channel);
+                closeSocketChannel(channel);
+            }
         }
     }
 }
