@@ -28,6 +28,17 @@ sourceSets {
     }
 }
 
-tasks.test {
+var ENABLE_PREVIEW = "--enable-preview"
+
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.add(ENABLE_PREVIEW)
+}
+
+tasks.withType<Test>().configureEach {
+    jvmArgs(ENABLE_PREVIEW)
     useJUnitPlatform()
+}
+
+tasks.withType<JavaExec>().configureEach {
+    jvmArgs(ENABLE_PREVIEW)
 }
