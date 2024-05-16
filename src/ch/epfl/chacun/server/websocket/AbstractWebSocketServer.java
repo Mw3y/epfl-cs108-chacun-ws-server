@@ -72,7 +72,7 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
      * @param ws      The socket channel to write the handshake response to.
      * @throws IOException If the handshake response could not be written to the socket channel.
      */
-    private static void openingHandshake(String content, GameWebSocket ws) throws IOException {
+    private static void openingHandshake(String content, WebSocketChannel ws) throws IOException {
         Pattern secWSKeyPattern = Pattern.compile("Sec-WebSocket-Key:\\s*(.*?)\r\n");
         Matcher secWSKeyMatcher = secWSKeyPattern.matcher(content);
 
@@ -116,25 +116,25 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
                     SelectionKey key = it.next();
                     if (key.isAcceptable()) {
                         SocketChannel channel = serverSocketChannel.accept();
-                        GameWebSocket gameWebSocket = new GameWebSocket(channel, this);
+                        WebSocketChannel webSocketChannel = new WebSocketChannel(channel, this);
                         if (channel != null) {
                             channel.configureBlocking(false);
                             channel.register(selector, SelectionKey.OP_READ);
-                            onOpen(gameWebSocket);
+                            onOpen(webSocketChannel);
                         }
                     }
                     if (key.isReadable()) {
                         SocketChannel socketChannel = (SocketChannel) key.channel();
-                        GameWebSocket gameWebSocket = new GameWebSocket(socketChannel, this);
+                        WebSocketChannel webSocketChannel = new WebSocketChannel(socketChannel, this);
 
                         ByteBuffer buffer = ByteBuffer.allocate(4096);
                         socketChannel.read(buffer);
                         PayloadData webSocketData = RFC6455.parsePayload(buffer);
                         String content = new String(buffer.array());
                         if (content.startsWith("GET / HTTP/1.1")) {
-                            openingHandshake(content, gameWebSocket);
+                            openingHandshake(content, webSocketChannel);
                         }
-                        dispatch(webSocketData, gameWebSocket);
+                        dispatch(webSocketData, webSocketChannel);
                     }
                     it.remove();
                 }
@@ -149,7 +149,7 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
     }
 
     @Override
-    public void dispatch(PayloadData payload, GameWebSocket ws) {
+    public void dispatch(PayloadData payload, WebSocketChannel ws) {
         switch (payload.opCode()) {
             case TEXT -> onMessage(ws, RFC6455.decodeText(payload));
             case PING -> onPing(ws);

@@ -12,7 +12,7 @@ public abstract class WebSocketEventListener {
      *
      * @param ws The channel of the new connection.
      */
-    abstract protected void onOpen(GameWebSocket ws);
+    abstract protected void onOpen(WebSocketChannel ws);
 
     /**
      * Called when a message is received.
@@ -20,28 +20,28 @@ public abstract class WebSocketEventListener {
      * @param ws      The channel of the connection.
      * @param message The message received.
      */
-    abstract protected void onMessage(GameWebSocket ws, String message);
+    abstract protected void onMessage(WebSocketChannel ws, String message);
 
     /**
      * Called when a ping is received.
      *
      * @param ws The channel of the connection.
      */
-    abstract protected void onPing(GameWebSocket ws);
+    abstract protected void onPing(WebSocketChannel ws);
 
     /**
      * Called when a pong is received.
      *
      * @param ws The channel of the connection.
      */
-    abstract protected void onPong(GameWebSocket ws);
+    abstract protected void onPong(WebSocketChannel ws);
 
     /**
      * Called when a connection will close.
      *
      * @param ws The channel of the connection.
      */
-    abstract protected void onClose(GameWebSocket ws);
+    abstract protected void onClose(WebSocketChannel ws);
 
     /**
      * Dispatches the payload data to the appropriate event handler.
@@ -49,5 +49,5 @@ public abstract class WebSocketEventListener {
      * @param payload The payload data.
      * @param ws      The channel of the connection.
      */
-    abstract protected void dispatch(PayloadData payload, GameWebSocket ws);
+    abstract protected void dispatch(PayloadData payload, WebSocketChannel ws);
 }

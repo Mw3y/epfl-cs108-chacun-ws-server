@@ -1,10 +1,10 @@
-package ch.epfl.chacun.server;
+package ch.epfl.chacun;
 
 import ch.epfl.chacun.server.websocket.WebSocketServer;
 
 public class Main {
     public static void main(String[] args) {
-        WebSocketServer server = new WebSocketServer(3000);
+        WebSocketServer server = new GameWebSocketServer(3000);
         server.start();
     }
 }

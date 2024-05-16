@@ -10,29 +10,29 @@ public class WebSocketServer extends AbstractWebSocketServer {
     }
 
     @Override
-    protected void onOpen(GameWebSocket ws) {
+    protected void onOpen(WebSocketChannel ws) {
         System.out.println("Connection opened");
     }
 
     @Override
-    protected void onMessage(GameWebSocket ws, String message) {
+    protected void onMessage(WebSocketChannel ws, String message) {
         System.out.println("message.received: " + message);
         ws.sendText("hello.world.from.server");
     }
 
     @Override
-    protected void onPing(GameWebSocket ws) {
+    protected void onPing(WebSocketChannel ws) {
         System.out.println("Ping received");
         ws.sendPong();
     }
 
     @Override
-    protected void onPong(GameWebSocket ws) {
+    protected void onPong(WebSocketChannel ws) {
         System.out.println("Pong received");
     }
 
     @Override
-    protected void onClose(GameWebSocket ws) {
+    protected void onClose(WebSocketChannel ws) {
         System.out.println("Connection closed");
     }
 }

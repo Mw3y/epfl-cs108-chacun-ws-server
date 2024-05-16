@@ -6,12 +6,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
-public class GameWebSocket {
+public class WebSocketChannel {
 
     private final SocketChannel channel;
     private final WebSocketEventListener listener;
 
-    public GameWebSocket(SocketChannel channel, WebSocketEventListener listener) {
+    public WebSocketChannel(SocketChannel channel, WebSocketEventListener listener) {
         this.channel = channel;
         this.listener = listener;
     }
