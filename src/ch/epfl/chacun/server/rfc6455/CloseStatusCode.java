@@ -57,7 +57,15 @@ public enum CloseStatusCode {
      */
     TLS_HANDSHAKE(1015);
 
-    final int statusCode;
+    /**
+     * The status code.
+     */
+    private final int statusCode;
+
+    /**
+     * Create a new CloseStatusCode with the provided code.
+     * @param code The status code.
+     */
     CloseStatusCode(int code) {
         this.statusCode = code;
     }

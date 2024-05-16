@@ -6,24 +6,51 @@ import java.util.List;
  * Represents the opcode of a WebSocket frame.
  */
 public enum OpCode {
+    /**
+     * Indicates that the frame is a continuation of a previous frame.
+     */
     CONTINUATION(0x0),
-    TEXT(0x1),
-    BINARY(0x2),
-    CLOSE(0x8),
-    PING(0x9),
-    PONG(0xA),
-    // 0xFF is a dummy value to represent reserved opcodes since it doesn't exist
-    RESERVED(0xFF);
 
-    private static final List<OpCode> ALL = List.of(values());
-    private final int value;
+    /**
+     * Indicates that the frame contains a text message.
+     */
+    TEXT(0x1),
+
+    /**
+     * Indicates that the frame contains binary data.
+     */
+    BINARY(0x2),
+
+    /**
+     * Indicates that the frame is a connection close request.
+     */
+    CLOSE(0x8),
+
+    /**
+     * Indicates that the frame is a ping request.
+     */
+    PING(0x9),
+    /**
+     * Indicates that the frame is a pong response.
+     */
+    PONG(0xA);
+
+    /**
+     * The list of all OpCode values.
+     */
+    public static final List<OpCode> ALL = List.of(values());
+
+    /**
+     * The value of the OpCode.
+     */
+    private final int code;
 
     /**
      * Create a new OpCode with the provided value.
-     * @param value The value of the OpCode.
+     * @param code The value of the OpCode.
      */
-    OpCode(int value) {
-        this.value = value;
+    OpCode(int code) {
+        this.code = code;
     }
 
     /**
@@ -32,7 +59,7 @@ public enum OpCode {
      * @return The OpCode matching the provided value or RESERVED by default.
      */
     public static OpCode fromValue(int value) {
-        return ALL.stream().filter(code -> code.value == value).findFirst().orElse(RESERVED);
+        return ALL.stream().filter(op -> op.code == value).findFirst().orElseThrow();
     }
 
     /**
@@ -40,7 +67,7 @@ public enum OpCode {
      * @return The value of the OpCode.
      */
     public int asNumber() {
-        return value;
+        return code;
     }
 
 }
