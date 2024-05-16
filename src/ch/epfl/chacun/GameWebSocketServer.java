@@ -11,7 +11,6 @@ public class GameWebSocketServer extends WebSocketServer {
 
     private List<GameLogic> games = new ArrayList<>();
 
-
     public GameWebSocketServer(int port) {
         super(port);
     }
