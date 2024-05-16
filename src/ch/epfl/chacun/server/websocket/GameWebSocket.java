@@ -9,9 +9,11 @@ import java.nio.channels.SocketChannel;
 public class GameWebSocket {
 
     private final SocketChannel channel;
+    private final WebSocketEventListener listener;
 
-    public GameWebSocket(SocketChannel channel) {
+    public GameWebSocket(SocketChannel channel, WebSocketEventListener listener) {
         this.channel = channel;
+        this.listener = listener;
     }
 
     public boolean sendText(String message) {
@@ -28,6 +30,7 @@ public class GameWebSocket {
 
     public boolean close() {
         try {
+            // listener.onClose(this);
             channel.socket().close();
             channel.close();
             return true;

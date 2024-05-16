@@ -116,7 +116,7 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
                     SelectionKey key = it.next();
                     if (key.isAcceptable()) {
                         SocketChannel channel = serverSocketChannel.accept();
-                        GameWebSocket gameWebSocket = new GameWebSocket(channel);
+                        GameWebSocket gameWebSocket = new GameWebSocket(channel, this);
                         if (channel != null) {
                             channel.configureBlocking(false);
                             channel.register(selector, SelectionKey.OP_READ);
@@ -125,7 +125,7 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
                     }
                     if (key.isReadable()) {
                         SocketChannel socketChannel = (SocketChannel) key.channel();
-                        GameWebSocket gameWebSocket = new GameWebSocket(socketChannel);
+                        GameWebSocket gameWebSocket = new GameWebSocket(socketChannel, this);
 
                         ByteBuffer buffer = ByteBuffer.allocate(4096);
                         socketChannel.read(buffer);

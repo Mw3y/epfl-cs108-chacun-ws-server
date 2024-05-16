@@ -6,7 +6,7 @@ public record PayloadData(
         ByteBuffer payload,
         boolean isFinal,
         int[] rsv,
-        RFC6455.OpCode opCode,
+        OpCode opCode,
         boolean isMasked,
         int length,
         byte[] mask,

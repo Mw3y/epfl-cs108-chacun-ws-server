@@ -1,9 +1,6 @@
 package ch.epfl.chacun.server.rfc6455;
 
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.List;
 
 public class RFC6455 {
 
@@ -41,8 +38,34 @@ public class RFC6455 {
      */
     private static ByteBuffer encodeControlFrame(OpCode opCode) {
         ByteBuffer buffer = ByteBuffer.allocate(2);
-        buffer.put((byte) (1 << FIN_BIT_POS | opCode.value()));
+        buffer.put((byte) (1 << FIN_BIT_POS | opCode.asNumber()));
         buffer.put((byte) 0); // No mask and no payload data length
+        buffer.flip();
+        return buffer.asReadOnlyBuffer();
+    }
+
+    public static ByteBuffer encodeCloseFrame(CloseStatusCode code, String reason) {
+        ByteBuffer buffer = ByteBuffer.allocate(2 + reason.length());
+        buffer.putShort((short) code.asNumber());
+        byte[] reasonBytes = reason.getBytes();
+        buffer.put(reasonBytes);
+        return encodeBytes(OpCode.CLOSE, buffer.array());
+    }
+
+    public static ByteBuffer encodeText(String message) {
+        return encodeBytes(OpCode.TEXT, message.getBytes());
+    }
+
+    public static ByteBuffer encodeBytes(OpCode opCode, byte[] data) {
+        ByteBuffer buffer = ByteBuffer.allocate(4096);
+        // Set the FIN bit to 1 and the opcode
+        byte firstByte = (byte) (1 << FIN_BIT_POS | opCode.asNumber());
+        buffer.put(firstByte);
+        // Set the MASK bit to 0 and the payload length
+        long unsignedLength = Integer.toUnsignedLong(data.length);
+        buffer.put(encodeLength(unsignedLength));
+        // Add the payload data
+        buffer.put(data);
         buffer.flip();
         return buffer.asReadOnlyBuffer();
     }
@@ -113,26 +136,6 @@ public class RFC6455 {
         // The data is the remaining bytes in the buffer
         ByteBuffer data = buffer.slice(buffer.position(), length);
         return new PayloadData(buffer, isFinal, rsv, opcode, isMasked, length, mask, data);
-    }
-
-
-    /**
-     * Encodes a message into a WebSocket frame.
-     * @param message The message to encode.
-     * @return The ByteBuffer containing the WebSocket frame.
-     */
-    public static ByteBuffer encodeText(String message) {
-        ByteBuffer buffer = ByteBuffer.allocate(4096);
-        // Set the FIN bit to 1 and the opcode to 0x1 (TEXT)
-        byte firstByte = (byte) (1 << FIN_BIT_POS | OpCode.TEXT.value());
-        buffer.put(firstByte);
-        // Set the MASK bit to 0 and the payload length
-        long unsignedLength = Integer.toUnsignedLong(message.length());
-        buffer.put(encodeLength(unsignedLength));
-        // Add the payload data
-        buffer.put(message.getBytes());
-        buffer.flip();
-        return buffer.asReadOnlyBuffer();
     }
 
     /**
@@ -293,48 +296,5 @@ public class RFC6455 {
      */
     public static boolean readIsMasked(ByteBuffer buffer) {
         return ((buffer.get(1) & IS_MASKED_MASK) >> IS_MASKED_POS) == 1;
-    }
-
-    /**
-     * Represents the opcode of a WebSocket frame.
-     */
-    public enum OpCode {
-        CONTINUATION(0x0),
-        TEXT(0x1),
-        BINARY(0x2),
-        CLOSE(0x8),
-        PING(0x9),
-        PONG(0xA),
-        // 0xFF is a dummy value to represent reserved opcodes since it doesn't exist
-        RESERVED(0xFF);
-
-        private static final List<OpCode> ALL = List.of(values());
-        private final int value;
-
-        /**
-         * Create a new OpCode with the provided value.
-         * @param value The value of the OpCode.
-         */
-        OpCode(int value) {
-            this.value = value;
-        }
-
-        /**
-         * Get the OpCode matching the provided value or RESERVED by default.
-         * @param value The value of the OpCode.
-         * @return The OpCode matching the provided value or RESERVED by default.
-         */
-        public static OpCode fromValue(int value) {
-            return ALL.stream().filter(code -> code.value == value).findFirst().orElse(RESERVED);
-        }
-
-        /**
-         * Get the value of the OpCode.
-         * @return The value of the OpCode.
-         */
-        public int value() {
-            return value;
-        }
-
     }
 }

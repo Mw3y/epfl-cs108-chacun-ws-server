@@ -1,5 +1,8 @@
 package ch.epfl.chacun.server.websocket;
 
+import ch.epfl.chacun.server.rfc6455.CloseStatusCode;
+import ch.epfl.chacun.server.rfc6455.RFC6455;
+
 public class WebSocketServer extends AbstractWebSocketServer {
 
     public WebSocketServer(int port) {
@@ -15,7 +18,6 @@ public class WebSocketServer extends AbstractWebSocketServer {
     protected void onMessage(GameWebSocket ws, String message) {
         System.out.println("message.received: " + message);
         ws.sendText("hello.world.from.server");
-        ws.sendPing();
     }
 
     @Override
