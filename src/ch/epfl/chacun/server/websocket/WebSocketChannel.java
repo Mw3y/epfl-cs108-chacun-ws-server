@@ -71,4 +71,8 @@ public class WebSocketChannel<T> {
         return false;
     }
 
+    @Override
+    public int hashCode() {
+        return channel.hashCode();
+    }
 }
