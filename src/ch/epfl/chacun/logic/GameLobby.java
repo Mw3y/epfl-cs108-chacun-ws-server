@@ -62,15 +62,16 @@ public class GameLobby {
      * @return {@code GameLogic.ServerAction.GAMEJOIN_ACCEPT} if the player was added,
      * {@code GameLogic.ServerAction.GAMEJOIN_DENY} otherwise.
      */
-    public ServerActionWithData addPlayer(String username) {
+    public GameActionData addPlayer(String username) {
         if (players.contains(username)) {
-            return new ServerActionWithData(ServerAction.GAMEJOIN_DENY, "USERNAME_TAKEN");
+            return new GameActionData(ServerAction.GAMEJOIN_DENY, "USERNAME_TAKEN");
         }
         if (players.size() == PlayerColor.ALL.size()) {
-            return new ServerActionWithData(ServerAction.GAMEJOIN_DENY, "GAME_FULL");
+            return new GameActionData(ServerAction.GAMEJOIN_DENY, "GAME_FULL");
         }
         players.add(username);
-        return new ServerActionWithData(ServerAction.GAMEJOIN_ACCEPT, String.join(",", players));
+        return new GameActionData(ServerAction.GAMEJOIN_ACCEPT, String.join(",", players),
+                new GamePlayerData(gameName, username), true);
     }
 
     /**
@@ -78,9 +79,9 @@ public class GameLobby {
      * @param username The username of the player to remove.
      * @throws IllegalArgumentException If the player is not in the game lobby.
      */
-    public ServerActionWithData removePlayer(String username) {
+    public GameActionData removePlayer(String username) {
         players.remove(username);
-        return new ServerActionWithData(ServerAction.GAMELEAVE, String.join(",", players));
+        return new GameActionData(ServerAction.GAMELEAVE, String.join(",", players), true);
     }
 
     /**

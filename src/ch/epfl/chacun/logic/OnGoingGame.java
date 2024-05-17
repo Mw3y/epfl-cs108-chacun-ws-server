@@ -65,19 +65,23 @@ public class OnGoingGame {
      * @param username the username of the player who sent the action
      * @return the result of the action
      */
-    public ServerActionWithData applyAction(String action, String username) {
+    public GameActionData applyAction(String action, String username) {
         // VAC NET will ban you if you're trying to cheat :/
         if (players.get(gameState.currentPlayer()).equals(username)) {
-            ActionEncoder.StateAction stateAction = ActionEncoder.decodeAndApply(gameState, action);
-            if (stateAction != null) {
-                gameState = stateAction.gameState();
-                if (hasEnded()) {
-                    return new ServerActionWithData(ServerAction.GAMEEND, "PLAYER_HAS_WON");
+            try {
+                ActionEncoder.StateAction stateAction = ActionEncoder.decodeAndApply(gameState, action);
+                if (stateAction != null) {
+                    gameState = stateAction.gameState();
+                    if (hasEnded()) {
+                        return new GameActionData(ServerAction.GAMEEND, "PLAYER_HAS_WON", true);
+                    }
+                    return new GameActionData(ServerAction.GAMEACTION_ACCEPT, action, true);
                 }
-                return new ServerActionWithData(ServerAction.GAMEACTION_ACCEPT, action);
+            } catch (IllegalArgumentException e) {
+                return new GameActionData(ServerAction.GAMEACTION_DENY, "INVALID_ACTION");
             }
         }
-        return new ServerActionWithData(ServerAction.GAMEACTION_DENY);
+        return new GameActionData(ServerAction.GAMEACTION_DENY);
     }
 
     /**

@@ -5,14 +5,14 @@ import ch.epfl.chacun.server.rfc6455.PayloadData;
 /**
  * Represents a listener for WebSocket server events.
  */
-public abstract class WebSocketEventListener {
+public abstract class WebSocketEventListener<T> {
 
     /**
      * Called when a new connection is opened.
      *
      * @param ws The channel of the new connection.
      */
-    abstract protected void onOpen(WebSocketChannel ws);
+    abstract protected void onOpen(WebSocketChannel<T> ws);
 
     /**
      * Called when a message is received.
@@ -20,28 +20,28 @@ public abstract class WebSocketEventListener {
      * @param ws      The channel of the connection.
      * @param message The message received.
      */
-    abstract protected void onMessage(WebSocketChannel ws, String message);
+    abstract protected void onMessage(WebSocketChannel<T> ws, String message);
 
     /**
      * Called when a ping is received.
      *
      * @param ws The channel of the connection.
      */
-    abstract protected void onPing(WebSocketChannel ws);
+    abstract protected void onPing(WebSocketChannel<T> ws);
 
     /**
      * Called when a pong is received.
      *
      * @param ws The channel of the connection.
      */
-    abstract protected void onPong(WebSocketChannel ws);
+    abstract protected void onPong(WebSocketChannel<T> ws);
 
     /**
      * Called when a connection will close.
      *
      * @param ws The channel of the connection.
      */
-    abstract protected void onClose(WebSocketChannel ws);
+    abstract protected void onClose(WebSocketChannel<T> ws);
 
     /**
      * Dispatches the payload data to the appropriate event handler.
@@ -49,5 +49,5 @@ public abstract class WebSocketEventListener {
      * @param payload The payload data.
      * @param ws      The channel of the connection.
      */
-    abstract protected void dispatch(PayloadData payload, WebSocketChannel ws);
+    abstract protected void dispatch(PayloadData payload, WebSocketChannel<T> ws);
 }

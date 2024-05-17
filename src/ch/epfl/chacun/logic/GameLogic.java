@@ -1,7 +1,6 @@
 package ch.epfl.chacun.logic;
 
-import ch.epfl.chacun.game.Preconditions;
-
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,18 +13,22 @@ public class GameLogic {
      */
     private final Map<String, OnGoingGame> games = new HashMap<>();
 
-    public ServerActionWithData parseAndApplyWebSocketAction(String action, String gameName, String username) {
+    public GameActionData parseAndApplyWebSocketAction(String action, GamePlayerData context) {
         String[] payload = action.split("\\.");
-        Preconditions.checkArgument(payload.length == 2);
-        return applyAction(ServerAction.valueOf(payload[0]), payload[1].split(","), gameName, username);
+        System.out.println(Arrays.toString(payload));
+        ServerAction serverAction = ServerAction.fromString(payload[0]);
+        if (serverAction != ServerAction.UNKNOWN) {
+            String gameName = context != null ? context.gameName() : null;
+            String username = context != null ? context.username() : null;
+            return applyAction(serverAction, payload[1].split(","), gameName, username);
+        }
+        return null;
     }
 
-    private ServerActionWithData applyAction(ServerAction action, String[] data, String gameName, String username) {
+    private GameActionData applyAction(ServerAction action, String[] data, String gameName, String username) {
         OnGoingGame game = games.get(gameName);
         return switch (action) {
             case GAMEJOIN -> {
-                Preconditions.checkArgument(data.length == 2);
-                Preconditions.checkArgument(!data[0].isBlank() && !data[1].isBlank());
                 String providedGameName = data[0];
                 String providedUsername = data[1];
 
@@ -36,31 +39,28 @@ public class GameLogic {
 
                 if (game != null) {
                     // The game has already started
-                    yield new ServerActionWithData(ServerAction.GAMEJOIN_DENY, "GAME_ALREADY_STARTED");
+                    yield new GameActionData(ServerAction.GAMEJOIN_DENY, "GAME_ALREADY_STARTED");
                 }
 
-                // Check if the game name is already taken
-                if (lobbies.containsKey(providedGameName) || games.containsKey(providedGameName)) {
-                    yield new ServerActionWithData(ServerAction.GAMEJOIN_DENY, "GAME_NAME_TAKEN");
-                }
                 // Create a new game lobby
                 lobbies.put(providedGameName, new GameLobby(providedGameName, providedUsername));
-                yield new ServerActionWithData(ServerAction.GAMEJOIN_ACCEPT);
+                yield new GameActionData(ServerAction.GAMEJOIN_ACCEPT, providedUsername,
+                        new GamePlayerData(providedGameName, providedUsername));
             }
             case GAMEACTION -> {
-                Preconditions.checkArgument(data.length == 1);
-
                 GameLobby lobby = lobbies.get(gameName);
-                if (lobby != null && lobby.getPlayers().getFirst().equals(username)) {
+                if (lobby != null && lobby.getPlayers().size() >= 2 && lobby.getPlayers().getFirst().equals(username)) {
                     game = startGameWithLobby(lobby);
                 }
-                // Check if the game exists
-                else if (game == null) {
-                    // The game has not started yet
-                    yield new ServerActionWithData(ServerAction.GAMEACTION_DENY, "GAME_NOT_STARTED");
+                else {
+                    yield new GameActionData(ServerAction.GAMEACTION_DENY, "GAME_NOT_STARTED");
                 }
 
-                yield game.applyAction(data[0], username);
+                GameActionData result = game.applyAction(data[0], username);
+                if (game.hasEnded()) {
+                    games.remove(gameName);
+                }
+                yield result;
             }
             case GAMELEAVE -> {
                 GameLobby lobby = lobbies.get(gameName);
@@ -69,15 +69,16 @@ public class GameLogic {
                 }
                 // Check if the game exists and has not ended
                 if (game != null && !game.hasEnded()) {
-                        yield new ServerActionWithData(ServerAction.GAMEEND, "PLAYER_LEFT_MIDGAME");
+                        games.remove(gameName); // Remove the game
+                        yield new GameActionData(
+                                ServerAction.GAMEEND, "PLAYER_LEFT_MIDGAME", true);
                 }
                 yield null;
             }
             case GAMEMSG -> {
-                Preconditions.checkArgument(data.length == 1);
-                yield new ServerActionWithData(ServerAction.GAMEMSG, data[0]);
+                yield new GameActionData(ServerAction.GAMEMSG, data[0], true);
             }
-            default -> new ServerActionWithData(ServerAction.UNKNOWN);
+            default -> null;
         };
     }
 
@@ -86,5 +87,15 @@ public class GameLogic {
         games.put(lobby.getGameName(), newGame);
         lobbies.remove(lobby.getGameName());
         return newGame;
+    }
+
+    private boolean isPlayerInLobby(String gameName, String username) {
+        GameLobby lobby = lobbies.get(gameName);
+        return lobby != null && lobby.getPlayers().contains(username);
+    }
+
+    private boolean isPlayerInGame(String gameName, String username) {
+        OnGoingGame game = games.get(gameName);
+        return game != null && game.getPlayers().containsValue(username);
     }
 }

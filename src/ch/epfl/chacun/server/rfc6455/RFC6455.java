@@ -49,14 +49,14 @@ public class RFC6455 {
         buffer.putShort((short) code.asNumber());
         byte[] reasonBytes = reason.getBytes();
         buffer.put(reasonBytes);
-        return encodeBytes(OpCode.CLOSE, buffer.array());
+        return encodeBytesFrame(OpCode.CLOSE, buffer.array());
     }
 
-    public static ByteBuffer encodeText(String message) {
-        return encodeBytes(OpCode.TEXT, message.getBytes());
+    public static ByteBuffer encodeTextFrame(String message) {
+        return encodeBytesFrame(OpCode.TEXT, message.getBytes());
     }
 
-    public static ByteBuffer encodeBytes(OpCode opCode, byte[] data) {
+    public static ByteBuffer encodeBytesFrame(OpCode opCode, byte[] data) {
         ByteBuffer buffer = ByteBuffer.allocate(4096);
         // Set the FIN bit to 1 and the opcode
         byte firstByte = (byte) (1 << FIN_BIT_POS | opCode.asNumber());
@@ -75,7 +75,7 @@ public class RFC6455 {
      * @param payloadData The payload data of the WebSocket frame.
      * @return The decoded string.
      */
-    public static String decodeText(PayloadData payloadData) {
+    public static String decodeTextFrame(PayloadData payloadData) {
         ByteBuffer data = payloadData.data();
         if (payloadData.isMasked()) {
             byte[] dataBytes = new byte[payloadData.length()];

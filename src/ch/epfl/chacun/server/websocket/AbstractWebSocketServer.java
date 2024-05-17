@@ -1,5 +1,6 @@
 package ch.epfl.chacun.server.websocket;
 
+import ch.epfl.chacun.server.rfc6455.CloseStatusCode;
 import ch.epfl.chacun.server.rfc6455.PayloadData;
 import ch.epfl.chacun.server.rfc6455.RFC6455;
 
@@ -18,7 +19,7 @@ import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class AbstractWebSocketServer extends WebSocketEventListener {
+public abstract class AbstractWebSocketServer<T> extends WebSocketEventListener<T> {
 
     /**
      * Globally Unique Identifier (GUID, [RFC4122]) in string form.
@@ -72,13 +73,13 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
      * @param ws      The socket channel to write the handshake response to.
      * @throws IOException If the handshake response could not be written to the socket channel.
      */
-    private static void openingHandshake(String content, WebSocketChannel ws) throws IOException {
+    private void openingHandshake(String content, WebSocketChannel<T> ws) throws IOException {
         Pattern secWSKeyPattern = Pattern.compile("Sec-WebSocket-Key:\\s*(.*?)\r\n");
         Matcher secWSKeyMatcher = secWSKeyPattern.matcher(content);
 
         // If the Sec-WebSocket-Key header is not present, close the connection
         if (!secWSKeyMatcher.find()) {
-            ws.close();
+            ws.close(CloseStatusCode.PROTOCOL_ERROR, "Sec-WebSocket-Key header not found");
             return;
         }
 
@@ -116,7 +117,7 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
                     SelectionKey key = it.next();
                     if (key.isAcceptable()) {
                         SocketChannel channel = serverSocketChannel.accept();
-                        WebSocketChannel webSocketChannel = new WebSocketChannel(channel, this);
+                        WebSocketChannel<T> webSocketChannel = new WebSocketChannel<>(channel, key, this);
                         if (channel != null) {
                             channel.configureBlocking(false);
                             channel.register(selector, SelectionKey.OP_READ);
@@ -125,16 +126,18 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
                     }
                     if (key.isReadable()) {
                         SocketChannel socketChannel = (SocketChannel) key.channel();
-                        WebSocketChannel webSocketChannel = new WebSocketChannel(socketChannel, this);
+                        WebSocketChannel<T> webSocketChannel = new WebSocketChannel<>(socketChannel, key, this);
 
                         ByteBuffer buffer = ByteBuffer.allocate(4096);
                         socketChannel.read(buffer);
-                        PayloadData webSocketData = RFC6455.parsePayload(buffer);
                         String content = new String(buffer.array());
                         if (content.startsWith("GET / HTTP/1.1")) {
                             openingHandshake(content, webSocketChannel);
                         }
-                        dispatch(webSocketData, webSocketChannel);
+                        else {
+                            PayloadData webSocketData = RFC6455.parsePayload(buffer);
+                            dispatch(webSocketData, webSocketChannel);
+                        }
                     }
                     it.remove();
                 }
@@ -149,14 +152,19 @@ public abstract class AbstractWebSocketServer extends WebSocketEventListener {
     }
 
     @Override
-    public void dispatch(PayloadData payload, WebSocketChannel ws) {
+    public void dispatch(PayloadData payload, WebSocketChannel<T> ws) {
         switch (payload.opCode()) {
-            case TEXT -> onMessage(ws, RFC6455.decodeText(payload));
+            case TEXT -> onMessage(ws, RFC6455.decodeTextFrame(payload));
             case PING -> onPing(ws);
             case PONG -> onPong(ws);
             case CLOSE -> {
                 onClose(ws);
-                ws.close();
+                try {
+                    ws.getChannel().socket().close();
+                    ws.getChannel().close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

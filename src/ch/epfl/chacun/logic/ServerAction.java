@@ -19,4 +19,12 @@ public enum ServerAction {
     public String toString() {
         return this.name();
     }
+
+    public static ServerAction fromString(String action) {
+        try {
+            return ServerAction.valueOf(action);
+        } catch (IllegalArgumentException e) {
+            return ServerAction.UNKNOWN;
+        }
+    }
 }
