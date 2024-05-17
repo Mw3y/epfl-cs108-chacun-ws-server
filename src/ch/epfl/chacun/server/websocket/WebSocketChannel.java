@@ -53,9 +53,10 @@ public class WebSocketChannel<T> {
         return sendBytes(RFC6455.encodeCloseFrame(code, reason));
     }
 
-    public boolean sendBytes(byte[] bytes) {
+    public boolean sendBytes(ByteBuffer buffer) {
         try {
-            channel.write(ByteBuffer.wrap(bytes));
+            buffer.rewind();
+            channel.write(buffer);
             return true;
         } catch (IOException e) {
             e.printStackTrace();
