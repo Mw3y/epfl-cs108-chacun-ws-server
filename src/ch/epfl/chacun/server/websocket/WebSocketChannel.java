@@ -37,10 +37,6 @@ public class WebSocketChannel<T> {
         return (T) key.attachment();
     }
 
-    public void subscribeTo(String id) {
-
-    }
-
     public boolean sendText(String message) {
         return sendBytes(RFC6455.encodeTextFrame(message));
     }
@@ -54,13 +50,12 @@ public class WebSocketChannel<T> {
     }
 
     public boolean close(CloseStatusCode code, String reason) {
-        sendBytes(RFC6455.encodeCloseFrame(code, reason));
-        return true;
+        return sendBytes(RFC6455.encodeCloseFrame(code, reason));
     }
 
-    public boolean sendBytes(ByteBuffer buffer) {
+    public boolean sendBytes(byte[] bytes) {
         try {
-            channel.write(buffer);
+            channel.write(ByteBuffer.wrap(bytes));
             return true;
         } catch (IOException e) {
             e.printStackTrace();

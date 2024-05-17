@@ -94,7 +94,7 @@ public abstract class AbstractWebSocketServer<T> extends WebSocketBroadcaster<T>
         responseBuilder.add("\r\n");
 
         // Send the handshake response
-        ws.sendBytes(ByteBuffer.wrap(responseBuilder.toString().getBytes()));
+        ws.sendBytes(responseBuilder.toString().getBytes());
     }
 
     public void start() {

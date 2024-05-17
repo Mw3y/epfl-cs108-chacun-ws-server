@@ -24,27 +24,27 @@ public class RFC6455 {
     /**
      * PING control frame.
      */
-    public static final ByteBuffer PING = encodeControlFrame(OpCode.PING);
+    public static final byte[] PING = encodeControlFrame(OpCode.PING);
 
     /**
      * PONG control frame.
      */
-    public static final ByteBuffer PONG = encodeControlFrame(OpCode.PONG);
+    public static final byte[] PONG = encodeControlFrame(OpCode.PONG);
 
     /**
      * Encodes a control frame with the provided opcode.
      * @param opCode The opcode of the control frame.
      * @return The ByteBuffer containing the control frame.
      */
-    private static ByteBuffer encodeControlFrame(OpCode opCode) {
+    private static byte[] encodeControlFrame(OpCode opCode) {
         ByteBuffer buffer = ByteBuffer.allocate(2);
         buffer.put((byte) (1 << FIN_BIT_POS | opCode.asNumber()));
         buffer.put((byte) 0); // No mask and no payload data length
         buffer.flip();
-        return buffer.asReadOnlyBuffer();
+        return buffer.array();
     }
 
-    public static ByteBuffer encodeCloseFrame(CloseStatusCode code, String reason) {
+    public static byte[] encodeCloseFrame(CloseStatusCode code, String reason) {
         ByteBuffer buffer = ByteBuffer.allocate(2 + reason.length());
         buffer.putShort((short) code.asNumber());
         byte[] reasonBytes = reason.getBytes();
@@ -52,11 +52,11 @@ public class RFC6455 {
         return encodeBytesFrame(OpCode.CLOSE, buffer.array());
     }
 
-    public static ByteBuffer encodeTextFrame(String message) {
+    public static byte[] encodeTextFrame(String message) {
         return encodeBytesFrame(OpCode.TEXT, message.getBytes());
     }
 
-    public static ByteBuffer encodeBytesFrame(OpCode opCode, byte[] data) {
+    public static byte[] encodeBytesFrame(OpCode opCode, byte[] data) {
         ByteBuffer buffer = ByteBuffer.allocate(4096);
         // Set the FIN bit to 1 and the opcode
         byte firstByte = (byte) (1 << FIN_BIT_POS | opCode.asNumber());
@@ -67,7 +67,7 @@ public class RFC6455 {
         // Add the payload data
         buffer.put(data);
         buffer.flip();
-        return buffer.asReadOnlyBuffer();
+        return buffer.array();
     }
 
     /**
