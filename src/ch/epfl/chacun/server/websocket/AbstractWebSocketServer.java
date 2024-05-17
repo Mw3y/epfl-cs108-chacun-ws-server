@@ -13,13 +13,11 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-import java.util.Iterator;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class AbstractWebSocketServer<T> extends WebSocketEventListener<T> {
+public abstract class AbstractWebSocketServer<T> extends WebSocketBroadcaster<T> {
 
     /**
      * Globally Unique Identifier (GUID, [RFC4122]) in string form.
@@ -158,13 +156,13 @@ public abstract class AbstractWebSocketServer<T> extends WebSocketEventListener<
             case PING -> onPing(ws);
             case PONG -> onPong(ws);
             case CLOSE -> {
-                onClose(ws);
                 try {
                     ws.getChannel().socket().close();
                     ws.getChannel().close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
+                onClose(ws);
             }
         }
     }

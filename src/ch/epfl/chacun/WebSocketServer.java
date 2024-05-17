@@ -3,6 +3,7 @@ package ch.epfl.chacun;
 import ch.epfl.chacun.logic.GamePlayerData;
 import ch.epfl.chacun.logic.GameActionData;
 import ch.epfl.chacun.logic.GameLogic;
+import ch.epfl.chacun.logic.ServerAction;
 import ch.epfl.chacun.server.websocket.AbstractWebSocketServer;
 import ch.epfl.chacun.server.websocket.WebSocketChannel;
 
@@ -16,7 +17,7 @@ public class WebSocketServer extends AbstractWebSocketServer<GamePlayerData> {
 
     @Override
     protected void onOpen(WebSocketChannel<GamePlayerData> ws) {
-        System.out.println("Connection opened");
+
     }
 
     @Override
@@ -27,15 +28,19 @@ public class WebSocketServer extends AbstractWebSocketServer<GamePlayerData> {
                 System.out.println("action.ctx().gameName() = " + action.ctx().gameName());
                 System.out.println("action.ctx().username() = " + action.ctx().username());
                 ws.attachContext(action.ctx());
+                subscribeTo(action.ctx().gameName(), ws);
             }
-            System.out.println(action);
-            ws.sendText(action.toGameActionString());
+            if (action.shouldBeBroadcasted()) {
+                broadcastTo(ws.getContext().gameName(), action.toGameActionString());
+            }
+            else {
+                ws.sendText(action.toGameActionString());
+            }
         }
     }
 
     @Override
     protected void onPing(WebSocketChannel<GamePlayerData> ws) {
-        System.out.println("Ping received");
         ws.sendPong();
     }
 
@@ -46,7 +51,14 @@ public class WebSocketServer extends AbstractWebSocketServer<GamePlayerData> {
 
     @Override
     protected void onClose(WebSocketChannel<GamePlayerData> ws) {
-        System.out.println("Connection closed");
+        GameActionData action = gameLogic
+                .parseAndApplyWebSocketAction(ServerAction.GAMELEAVE.toString(), ws.getContext());
+        if (action != null) {
+            unsubscribeFrom(ws.getContext().gameName(), ws);
+            if (action.shouldBeBroadcasted()) {
+                broadcastTo(ws.getContext().gameName(), action.toGameActionString());
+            }
+        }
     }
 }
 

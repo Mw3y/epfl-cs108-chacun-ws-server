@@ -20,7 +20,8 @@ public class GameLogic {
         if (serverAction != ServerAction.UNKNOWN) {
             String gameName = context != null ? context.gameName() : null;
             String username = context != null ? context.username() : null;
-            return applyAction(serverAction, payload[1].split(","), gameName, username);
+            String[] data = payload.length > 1 ? payload[1].split(",") : new String[0];
+            return applyAction(serverAction, data, gameName, username);
         }
         return null;
     }
@@ -32,12 +33,17 @@ public class GameLogic {
                 String providedGameName = data[0];
                 String providedUsername = data[1];
 
+                if (gameName != null) {
+                    // The player is already in a game
+                    yield new GameActionData(ServerAction.GAMEJOIN_DENY, "ALREADY_IN_GAME");
+                }
+
                 GameLobby lobby = lobbies.get(providedGameName);
                 if (lobby != null) {
                     yield lobby.addPlayer(providedUsername);
                 }
 
-                if (game != null) {
+                if (games.get(providedGameName) != null) {
                     // The game has already started
                     yield new GameActionData(ServerAction.GAMEJOIN_DENY, "GAME_ALREADY_STARTED");
                 }
@@ -52,15 +58,12 @@ public class GameLogic {
                 if (lobby != null && lobby.getPlayers().size() >= 2 && lobby.getPlayers().getFirst().equals(username)) {
                     game = startGameWithLobby(lobby);
                 }
-                else {
+
+                if (game == null) {
                     yield new GameActionData(ServerAction.GAMEACTION_DENY, "GAME_NOT_STARTED");
                 }
 
-                GameActionData result = game.applyAction(data[0], username);
-                if (game.hasEnded()) {
-                    games.remove(gameName);
-                }
-                yield result;
+                yield game.applyAction(data[0], username);
             }
             case GAMELEAVE -> {
                 GameLobby lobby = lobbies.get(gameName);
@@ -76,7 +79,11 @@ public class GameLogic {
                 yield null;
             }
             case GAMEMSG -> {
-                yield new GameActionData(ServerAction.GAMEMSG, data[0], true);
+                if (gameName != null) {
+                    String message = STR."\{username}=\{data[0]}";
+                    yield new GameActionData(ServerAction.GAMEMSG, message, true);
+                }
+                yield null;
             }
             default -> null;
         };
@@ -87,15 +94,5 @@ public class GameLogic {
         games.put(lobby.getGameName(), newGame);
         lobbies.remove(lobby.getGameName());
         return newGame;
-    }
-
-    private boolean isPlayerInLobby(String gameName, String username) {
-        GameLobby lobby = lobbies.get(gameName);
-        return lobby != null && lobby.getPlayers().contains(username);
-    }
-
-    private boolean isPlayerInGame(String gameName, String username) {
-        OnGoingGame game = games.get(gameName);
-        return game != null && game.getPlayers().containsValue(username);
     }
 }

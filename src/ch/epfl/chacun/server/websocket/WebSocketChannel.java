@@ -37,6 +37,10 @@ public class WebSocketChannel<T> {
         return (T) key.attachment();
     }
 
+    public void subscribeTo(String id) {
+
+    }
+
     public boolean sendText(String message) {
         return sendBytes(RFC6455.encodeTextFrame(message));
     }
@@ -50,7 +54,8 @@ public class WebSocketChannel<T> {
     }
 
     public boolean close(CloseStatusCode code, String reason) {
-        return sendBytes(RFC6455.encodeCloseFrame(code, reason));
+        sendBytes(RFC6455.encodeCloseFrame(code, reason));
+        return true;
     }
 
     public boolean sendBytes(ByteBuffer buffer) {
@@ -61,6 +66,14 @@ public class WebSocketChannel<T> {
             e.printStackTrace();
             return false;
         }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof WebSocketChannel ws) {
+            return ws.channel.equals(channel);
+        }
+        return false;
     }
 
 }
