@@ -53,6 +53,16 @@ public class WebSocketChannel<T> {
         return sendBytes(RFC6455.encodeCloseFrame(code, reason));
     }
 
+    public boolean terminate() {
+        try {
+            getChannel().socket().close();
+            getChannel().close();
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     public boolean sendBytes(ByteBuffer buffer) {
         try {
             buffer.rewind();

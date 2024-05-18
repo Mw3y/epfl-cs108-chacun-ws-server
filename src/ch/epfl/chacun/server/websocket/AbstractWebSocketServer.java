@@ -156,13 +156,8 @@ public abstract class AbstractWebSocketServer<T> extends WebSocketBroadcaster<T>
             case PING -> onPing(ws);
             case PONG -> onPong(ws);
             case CLOSE -> {
-                try {
-                    ws.getChannel().socket().close();
-                    ws.getChannel().close();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
                 onClose(ws);
+                ws.terminate();
             }
         }
     }
