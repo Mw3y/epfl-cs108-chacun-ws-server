@@ -98,7 +98,7 @@ public class RFC6455 {
      * @param payload The payload data of the WebSocket frame.
      * @return The parsed payload data.
      */
-    public static PayloadData parsePayload(ByteBuffer payload) {
+    public static PayloadData unsafeParsePayload(ByteBuffer payload) {
         /*
          *  0                   1                   2                   3
          *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -136,6 +136,19 @@ public class RFC6455 {
         // The data is the remaining bytes in the buffer
         ByteBuffer data = buffer.slice(buffer.position(), length);
         return new PayloadData(buffer, isFinal, rsv, opcode, isMasked, length, mask, data);
+    }
+
+    /**
+     * Parses the payload data of a WebSocket frame.
+     * @param payload The payload data of the WebSocket frame.
+     * @return The parsed payload data.
+     */
+    public static PayloadData parsePayload(ByteBuffer payload) {
+        try {
+            return unsafeParsePayload(payload.duplicate());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**

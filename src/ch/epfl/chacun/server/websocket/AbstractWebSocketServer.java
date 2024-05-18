@@ -133,8 +133,9 @@ public abstract class AbstractWebSocketServer<T> extends WebSocketBroadcaster<T>
                             openingHandshake(content, webSocketChannel);
                         }
                         else {
-                            PayloadData webSocketData = RFC6455.parsePayload(buffer);
-                            dispatch(webSocketData, webSocketChannel);
+                            PayloadData payloadData = RFC6455.parsePayload(buffer);
+                            if (payloadData != null)
+                                dispatch(payloadData, webSocketChannel);
                         }
                     }
                     it.remove();
