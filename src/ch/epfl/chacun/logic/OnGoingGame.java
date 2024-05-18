@@ -41,7 +41,7 @@ public class OnGoingGame {
      * @param players The players of the game
      */
     public OnGoingGame(String gameName, Map<PlayerColor, String> players) {
-        List<PlayerColor> playerColors = players.keySet().stream().toList();
+        List<PlayerColor> playerColors = players.keySet().stream().sorted().toList();
         // Shuffle the tiles
         int seed = gameName.hashCode();
         RandomGenerator shuffler = RandomGeneratorFactory.getDefault().create(seed);
