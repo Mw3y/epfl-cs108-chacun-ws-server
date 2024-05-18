@@ -6,6 +6,7 @@ import ch.epfl.chacun.server.rfc6455.RFC6455;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -127,20 +128,25 @@ public abstract class AbstractWebSocketServer<T> extends WebSocketBroadcaster<T>
                     if (key.isReadable()) {
                         SocketChannel socketChannel = (SocketChannel) key.channel();
                         WebSocketChannel<T> webSocketChannel = new WebSocketChannel<>(socketChannel, key, this);
-
-                        ByteBuffer buffer = ByteBuffer.allocate(4096);
-                        socketChannel.read(buffer);
-                        String content = new String(buffer.array());
-                        if (content.startsWith("GET / HTTP/1.1")) {
-                            openingHandshake(content, webSocketChannel);
-                        } else {
-                            PayloadData payloadData = RFC6455.parsePayload(buffer);
-                            if (payloadData != null) {
-                                dispatch(payloadData, webSocketChannel);
+                        try {
+                            ByteBuffer buffer = ByteBuffer.allocate(4096);
+                            socketChannel.read(buffer);
+                            String content = new String(buffer.array());
+                            if (content.startsWith("GET / HTTP/1.1")) {
+                                openingHandshake(content, webSocketChannel);
                             } else {
-                                webSocketChannel.close(CloseStatusCode.PROTOCOL_ERROR, "Invalid payload");
-                                webSocketChannel.terminate();
+                                PayloadData payloadData = RFC6455.parsePayload(buffer);
+                                if (payloadData != null) {
+                                    dispatch(payloadData, webSocketChannel);
+                                } else {
+                                    webSocketChannel.close(CloseStatusCode.PROTOCOL_ERROR, "Invalid payload");
+                                    webSocketChannel.terminate();
+                                }
                             }
+                        } catch (SocketException e) {
+                            // Close the connection if the client has disconnected
+                            onClose(webSocketChannel);
+                            webSocketChannel.terminate();
                         }
                     }
                     it.remove();

@@ -55,6 +55,7 @@ public class WebSocketChannel<T> {
 
     public boolean terminate() {
         try {
+            listener.onClose(this);
             getChannel().socket().close();
             getChannel().close();
             return true;
