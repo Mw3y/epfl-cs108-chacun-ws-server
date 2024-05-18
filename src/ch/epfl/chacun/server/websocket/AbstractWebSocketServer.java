@@ -13,7 +13,9 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.Base64;
+import java.util.Iterator;
+import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -131,11 +133,14 @@ public abstract class AbstractWebSocketServer<T> extends WebSocketBroadcaster<T>
                         String content = new String(buffer.array());
                         if (content.startsWith("GET / HTTP/1.1")) {
                             openingHandshake(content, webSocketChannel);
-                        }
-                        else {
+                        } else {
                             PayloadData payloadData = RFC6455.parsePayload(buffer);
-                            if (payloadData != null)
+                            if (payloadData != null) {
                                 dispatch(payloadData, webSocketChannel);
+                            } else {
+                                webSocketChannel.close(CloseStatusCode.PROTOCOL_ERROR, "Invalid payload");
+                                webSocketChannel.terminate();
+                            }
                         }
                     }
                     it.remove();
