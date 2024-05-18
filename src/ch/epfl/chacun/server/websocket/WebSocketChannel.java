@@ -71,6 +71,7 @@ public class WebSocketChannel<T> {
             return true;
         } catch (IOException e) {
             e.printStackTrace();
+            terminate();
             return false;
         }
     }
