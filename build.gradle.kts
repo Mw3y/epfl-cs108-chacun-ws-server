@@ -42,3 +42,11 @@ tasks.withType<Test>().configureEach {
 tasks.withType<JavaExec>().configureEach {
     jvmArgs(ENABLE_PREVIEW)
 }
+
+tasks.jar {
+    manifest {
+        attributes(
+            "Main-Class" to "ch.epfl.chacun.Main"
+        )
+    }
+}
