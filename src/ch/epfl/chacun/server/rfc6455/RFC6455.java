@@ -98,7 +98,7 @@ public class RFC6455 {
      * @param payload The payload data of the WebSocket frame.
      * @return The parsed payload data.
      */
-    public static PayloadData unsafeParsePayload(ByteBuffer payload) {
+    private static PayloadData unsafeParsePayload(ByteBuffer payload) {
         /*
          *  0                   1                   2                   3
          *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
