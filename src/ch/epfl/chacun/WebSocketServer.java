@@ -24,6 +24,7 @@ public class WebSocketServer extends AbstractAsyncWebSocketServer<GamePlayerData
 
     public WebSocketServer(String hostname, int port) throws IOException {
         super(hostname, port);
+        System.out.println(STR."Server started on \{hostname}:\{port}");
         executor.scheduleAtFixedRate(timeoutWatcher, 0, PING_INTERVAL, TimeUnit.MILLISECONDS);
     }
 

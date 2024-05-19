@@ -17,22 +17,32 @@ import java.nio.channels.AsynchronousSocketChannel;
  */
 public abstract class AbstractAsyncWebSocketServer<T> extends WebSocketBroadcaster<T> {
 
+    public static final int MAX_MESSAGE_SIZE = 256;
+
     public AbstractAsyncWebSocketServer(String bindAddr, int bindPort) throws IOException {
         InetSocketAddress sockAddr = new InetSocketAddress(bindAddr, bindPort);
-
-        // create a socket channel and bind to local bind address
+        // Create a socket channel and bind to local bind address
         AsynchronousServerSocketChannel serverSock = AsynchronousServerSocketChannel.open().bind(sockAddr);
-
-        // start to accept the connection from client
+        // Start to accept the connection from client
         serverSock.accept(serverSock, new ChannelConnectionHandler<T>(this));
     }
 
+    /**
+     * Start to read message from the client
+     *
+     * @param sockChannel the socket channel to read messages from
+     */
     public void startRead(AsynchronousSocketChannel sockChannel) {
-        final ByteBuffer buf = ByteBuffer.allocate(256);
-        // read message from client
+        final ByteBuffer buf = ByteBuffer.allocate(MAX_MESSAGE_SIZE);
         sockChannel.read(buf, sockChannel, new ChannelReadHandler<T>(this, buf));
     }
 
+    /**
+     * Start to write message to the client
+     *
+     * @param sockChannel the socket channel to write messages to
+     * @param buf         the buffer containing the message to write
+     */
     public void startWrite(AsynchronousSocketChannel sockChannel, final ByteBuffer buf) {
         sockChannel.write(buf, sockChannel, new ChannelWriteHandler<T>(this));
     }
@@ -46,7 +56,6 @@ public abstract class AbstractAsyncWebSocketServer<T> extends WebSocketBroadcast
             case PONG -> onPong(ws);
             case CLOSE -> {
                 onClose(ws);
-                ws.terminate();
             }
         }
     }

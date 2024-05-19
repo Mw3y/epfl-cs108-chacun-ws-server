@@ -23,7 +23,7 @@ public class ChannelConnectionHandler<T> implements CompletionHandler<Asynchrono
     }
 
     @Override
-    public void failed(Throwable exc, AsynchronousServerSocketChannel attachment) {
-        System.out.println("fail to accept a connection");
+    public void failed(Throwable exc, AsynchronousServerSocketChannel channel) {
+        System.out.println("Failed to accept a connection");
     }
 }
