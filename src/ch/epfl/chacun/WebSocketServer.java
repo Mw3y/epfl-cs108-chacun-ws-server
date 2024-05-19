@@ -96,7 +96,6 @@ public class WebSocketServer extends AbstractAsyncWebSocketServer<GamePlayerData
                 // terminate the connection since the close handshake was not completed
                 if (lastPing.getTime() - lastPong.getTime() > 2 * PING_INTERVAL) {
                     ws.terminate();
-                    removeClient(ws);
                 }
                 // If the last pong was received more than PING_INTERVAL ms after the last ping, close the connection
                 else if (lastPing.getTime() - lastPong.getTime() > PING_INTERVAL) {

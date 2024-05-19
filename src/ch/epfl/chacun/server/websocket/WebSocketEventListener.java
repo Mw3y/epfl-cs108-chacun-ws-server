@@ -51,5 +51,5 @@ public abstract class WebSocketEventListener<T> {
      * @param payload The payload data.
      * @param ws      The channel of the connection.
      */
-    abstract public void dispatch(PayloadData payload, AsynchronousSocketChannel ws);
+    abstract public void dispatch(PayloadData payload, WebSocketChannel<T> ws);
 }

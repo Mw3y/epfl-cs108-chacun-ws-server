@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
-import java.nio.channels.AsynchronousSocketChannel;
 
 /**
  * @author Steven Ou
@@ -30,33 +29,30 @@ public abstract class AbstractAsyncWebSocketServer<T> extends WebSocketBroadcast
     /**
      * Start to read message from the client
      *
-     * @param sockChannel the socket channel to read messages from
+     * @param ws the socket channel to read messages from
      */
-    public void startRead(AsynchronousSocketChannel sockChannel) {
+    public void startRead(WebSocketChannel<T> ws) {
         final ByteBuffer buf = ByteBuffer.allocate(MAX_MESSAGE_SIZE);
-        sockChannel.read(buf, sockChannel, new ChannelReadHandler<T>(this, buf));
+        ws.getChannel().read(buf, ws, new ChannelReadHandler<T>(this, buf));
     }
 
     /**
      * Start to write message to the client
      *
-     * @param sockChannel the socket channel to write messages to
-     * @param buf         the buffer containing the message to write
+     * @param ws  the socket channel to write messages to
+     * @param buf the buffer containing the message to write
      */
-    public void startWrite(AsynchronousSocketChannel sockChannel, final ByteBuffer buf) {
-        sockChannel.write(buf, sockChannel, new ChannelWriteHandler<T>(this));
+    public void startWrite(WebSocketChannel<T> ws, final ByteBuffer buf) {
+        ws.getChannel().write(buf, ws, new ChannelWriteHandler<T>(this));
     }
 
     @Override
-    public void dispatch(PayloadData payload, AsynchronousSocketChannel channel) {
-        WebSocketChannel<T> ws = new WebSocketChannel<>(channel, this);
+    public void dispatch(PayloadData payload, WebSocketChannel<T> ws) {
         switch (payload.opCode()) {
             case TEXT -> onMessage(ws, RFC6455.decodeTextFrame(payload));
             case PING -> onPing(ws);
             case PONG -> onPong(ws);
-            case CLOSE -> {
-                onClose(ws);
-            }
+            case CLOSE -> onClose(ws);
         }
     }
 }

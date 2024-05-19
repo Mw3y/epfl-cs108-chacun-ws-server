@@ -1,16 +1,18 @@
 package ch.epfl.chacun.server.websocket.handlers;
 
+import ch.epfl.chacun.server.rfc6455.CloseStatusCode;
 import ch.epfl.chacun.server.rfc6455.OpCode;
 import ch.epfl.chacun.server.rfc6455.PayloadData;
 import ch.epfl.chacun.server.rfc6455.RFC6455;
 import ch.epfl.chacun.server.websocket.AbstractAsyncWebSocketServer;
+import ch.epfl.chacun.server.websocket.WebSocketChannel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 
-public class ChannelReadHandler<T> implements CompletionHandler<Integer, AsynchronousSocketChannel> {
+public class ChannelReadHandler<T> implements CompletionHandler<Integer, WebSocketChannel<T>> {
 
     private final AbstractAsyncWebSocketServer<T> server;
     private final ByteBuffer payload;
@@ -21,7 +23,7 @@ public class ChannelReadHandler<T> implements CompletionHandler<Integer, Asynchr
     }
 
     @Override
-    public void completed(Integer result, AsynchronousSocketChannel channel) {
+    public void completed(Integer result, WebSocketChannel<T> channel) {
         // If the client has disconnected
         if (result == -1) {
             failed(new IllegalArgumentException("Client disconnected"), channel);
@@ -61,12 +63,8 @@ public class ChannelReadHandler<T> implements CompletionHandler<Integer, Asynchr
     }
 
     @Override
-    public void failed(Throwable exc, AsynchronousSocketChannel channel) {
+    public void failed(Throwable exc, WebSocketChannel<T> ws) {
         System.out.println("Failed to read message from client... closing channel");
-        try {
-            channel.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        ws.terminate();
     }
 }

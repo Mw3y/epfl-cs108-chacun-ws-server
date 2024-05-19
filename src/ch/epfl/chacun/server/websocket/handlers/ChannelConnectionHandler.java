@@ -1,6 +1,7 @@
 package ch.epfl.chacun.server.websocket.handlers;
 
 import ch.epfl.chacun.server.websocket.AbstractAsyncWebSocketServer;
+import ch.epfl.chacun.server.websocket.WebSocketChannel;
 
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
@@ -18,8 +19,10 @@ public class ChannelConnectionHandler<T> implements CompletionHandler<Asynchrono
     public void completed(AsynchronousSocketChannel channel, AsynchronousServerSocketChannel serverChannel) {
         // A connection is accepted, start to accept next connection
         serverChannel.accept(serverChannel, this);
-        // start to read message from the client
-        server.startRead(channel);
+        // Evolve the connection to a WebSocket channel
+        WebSocketChannel<T> ws = new WebSocketChannel<>(channel, server);
+        // Start to read message from the client
+        server.startRead(ws);
     }
 
     @Override

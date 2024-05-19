@@ -2,6 +2,7 @@ package ch.epfl.chacun.server.websocket;
 
 import ch.epfl.chacun.server.rfc6455.CloseStatusCode;
 import ch.epfl.chacun.server.rfc6455.RFC6455;
+import ch.epfl.chacun.server.websocket.handlers.ChannelWriteHandler;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
