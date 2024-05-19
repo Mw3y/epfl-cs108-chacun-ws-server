@@ -5,36 +5,35 @@ import ch.epfl.chacun.server.rfc6455.RFC6455;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
 public class WebSocketChannel<T> {
 
-    private final SocketChannel channel;
+    private final AsynchronousSocketChannel channel;
     private final WebSocketEventListener<T> listener;
-    private final SelectionKey key;
+    private T context;
 
-    public WebSocketChannel(SocketChannel channel, SelectionKey key, WebSocketEventListener<T> listener) {
+    public WebSocketChannel(AsynchronousSocketChannel channel, WebSocketEventListener<T> listener) {
         this.channel = channel;
-        this.key = key;
         this.listener = listener;
     }
 
     public void attachContext(T context) {
-        key.attach(context);
+        this.context = context;
     }
 
     /**
      * Returns the underlying SocketChannel.
      * @return The underlying SocketChannel.
      */
-    public SocketChannel getChannel() {
+    public AsynchronousSocketChannel getChannel() {
         return channel;
     }
 
-    @SuppressWarnings("unchecked")
     public T getContext() {
-        return (T) key.attachment();
+        return context;
     }
 
     public boolean sendText(String message) {
@@ -56,7 +55,6 @@ public class WebSocketChannel<T> {
     public boolean terminate() {
         try {
             listener.onClose(this);
-            getChannel().socket().close();
             getChannel().close();
             return true;
         } catch (IOException e) {
@@ -65,15 +63,9 @@ public class WebSocketChannel<T> {
     }
 
     public boolean sendBytes(ByteBuffer buffer) {
-        try {
-            buffer.rewind();
-            channel.write(buffer);
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-            terminate();
-            return false;
-        }
+        buffer.rewind();
+        channel.write(buffer);
+        return true;
     }
 
     @Override

@@ -5,24 +5,25 @@ import ch.epfl.chacun.logic.GameLogic;
 import ch.epfl.chacun.logic.GamePlayerData;
 import ch.epfl.chacun.logic.ServerAction;
 import ch.epfl.chacun.server.rfc6455.CloseStatusCode;
-import ch.epfl.chacun.server.websocket.AbstractWebSocketServer;
+import ch.epfl.chacun.server.websocket.AbstractAsyncWebSocketServer;
 import ch.epfl.chacun.server.websocket.WebSocketChannel;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class WebSocketServer extends AbstractWebSocketServer<GamePlayerData> {
+public class WebSocketServer extends AbstractAsyncWebSocketServer<GamePlayerData> {
 
     private static final int PING_INTERVAL = 60 * 1000;
     GameLogic gameLogic = new GameLogic();
     TimeoutWatcher<GamePlayerData> timeoutWatcher = new TimeoutWatcher<>();
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
 
-    public WebSocketServer(int port) {
-        super(port);
+    public WebSocketServer(String hostname, int port) throws IOException {
+        super(hostname, port);
         executor.scheduleAtFixedRate(timeoutWatcher, 0, PING_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
