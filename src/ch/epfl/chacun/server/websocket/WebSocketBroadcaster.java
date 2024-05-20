@@ -1,5 +1,6 @@
 package ch.epfl.chacun.server.websocket;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 
 public abstract class WebSocketBroadcaster<T> extends WebSocketEventListener<T> {
@@ -20,13 +21,15 @@ public abstract class WebSocketBroadcaster<T> extends WebSocketEventListener<T> 
     }
 
     protected void broadcastTo(String id, String message) {
+        broadcastTo(id, ByteBuffer.wrap(message.getBytes()));
+    }
+
+    protected void broadcastTo(String id, ByteBuffer buffer) {
         if (channels.containsKey(id)) {
             Iterator<WebSocketChannel<T>> iterator = channels.get(id).iterator();
             while (iterator.hasNext()) {
                 WebSocketChannel<T> channel = iterator.next();
-                if (!channel.sendText(message)) {
-                    iterator.remove();
-                }
+                channel.sendBytes(buffer);
             }
         }
     }

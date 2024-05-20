@@ -1,23 +1,18 @@
-package ch.epfl.chacun.server.websocket.handlers;
+package ch.epfl.chacun.server.websocket;
 
-import ch.epfl.chacun.server.rfc6455.CloseStatusCode;
 import ch.epfl.chacun.server.rfc6455.OpCode;
 import ch.epfl.chacun.server.rfc6455.PayloadData;
 import ch.epfl.chacun.server.rfc6455.RFC6455;
-import ch.epfl.chacun.server.websocket.AbstractAsyncWebSocketServer;
-import ch.epfl.chacun.server.websocket.WebSocketChannel;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 
 public class ChannelReadHandler<T> implements CompletionHandler<Integer, WebSocketChannel<T>> {
 
-    private final AbstractAsyncWebSocketServer<T> server;
+    private final AsyncWebSocketServer<T> server;
     private final ByteBuffer payload;
 
-    public ChannelReadHandler(AbstractAsyncWebSocketServer<T> server, ByteBuffer payload) {
+    public ChannelReadHandler(AsyncWebSocketServer<T> server, ByteBuffer payload) {
         this.server = server;
         this.payload = payload;
     }

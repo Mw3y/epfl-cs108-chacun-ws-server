@@ -1,18 +1,12 @@
-package ch.epfl.chacun.server.websocket.handlers;
+package ch.epfl.chacun.server.websocket;
 
-import ch.epfl.chacun.server.websocket.AbstractAsyncWebSocketServer;
-import ch.epfl.chacun.server.websocket.WebSocketChannel;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 
 public class ChannelWriteHandler<T> implements CompletionHandler<Integer, WebSocketChannel<T>> {
 
-    private final AbstractAsyncWebSocketServer<T> server;
+    private final AsyncWebSocketServer<T> server;
 
-    public ChannelWriteHandler(AbstractAsyncWebSocketServer<T> server) {
+    public ChannelWriteHandler(AsyncWebSocketServer<T> server) {
         this.server = server;
     }
 

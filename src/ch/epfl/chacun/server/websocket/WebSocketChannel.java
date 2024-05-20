@@ -2,23 +2,20 @@ package ch.epfl.chacun.server.websocket;
 
 import ch.epfl.chacun.server.rfc6455.CloseStatusCode;
 import ch.epfl.chacun.server.rfc6455.RFC6455;
-import ch.epfl.chacun.server.websocket.handlers.ChannelWriteHandler;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
 
 public class WebSocketChannel<T> {
 
     private final AsynchronousSocketChannel channel;
-    private final WebSocketEventListener<T> listener;
+    private final AsyncWebSocketServer<T> server;
     private T context;
 
-    public WebSocketChannel(AsynchronousSocketChannel channel, WebSocketEventListener<T> listener) {
+    public WebSocketChannel(AsynchronousSocketChannel channel, AsyncWebSocketServer<T> server) {
         this.channel = channel;
-        this.listener = listener;
+        this.server = server;
     }
 
     public void attachContext(T context) {
@@ -37,25 +34,25 @@ public class WebSocketChannel<T> {
         return context;
     }
 
-    public boolean sendText(String message) {
-        return sendBytes(RFC6455.encodeTextFrame(message));
+    public void sendText(String message) {
+        sendBytes(RFC6455.encodeTextFrame(message));
     }
 
-    public boolean sendPing() {
-        return sendBytes(RFC6455.PING);
+    public void sendPing() {
+        sendBytes(RFC6455.PING);
     }
 
-    public boolean sendPong() {
-        return sendBytes(RFC6455.PONG);
+    public void sendPong() {
+        sendBytes(RFC6455.PONG);
     }
 
-    public boolean close(CloseStatusCode code, String reason) {
-        return sendBytes(RFC6455.encodeCloseFrame(code, reason));
+    public void close(CloseStatusCode code, String reason) {
+        sendBytes(RFC6455.encodeCloseFrame(code, reason));
     }
 
     public boolean terminate() {
         try {
-            listener.onClose(this);
+            server.onClose(this);
             getChannel().close();
             return true;
         } catch (IOException e) {
@@ -63,10 +60,8 @@ public class WebSocketChannel<T> {
         }
     }
 
-    public boolean sendBytes(ByteBuffer buffer) {
-        buffer.rewind();
-        channel.write(buffer);
-        return true;
+    public void sendBytes(ByteBuffer buffer) {
+        server.startWrite(this, buffer);
     }
 
     @Override

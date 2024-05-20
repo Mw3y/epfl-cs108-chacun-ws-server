@@ -1,7 +1,5 @@
 package ch.epfl.chacun;
 
-import ch.epfl.chacun.server.websocket.AbstractAsyncWebSocketServer;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

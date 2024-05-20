@@ -2,9 +2,6 @@ package ch.epfl.chacun.server.websocket;
 
 import ch.epfl.chacun.server.rfc6455.PayloadData;
 import ch.epfl.chacun.server.rfc6455.RFC6455;
-import ch.epfl.chacun.server.websocket.handlers.ChannelConnectionHandler;
-import ch.epfl.chacun.server.websocket.handlers.ChannelReadHandler;
-import ch.epfl.chacun.server.websocket.handlers.ChannelWriteHandler;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -14,16 +11,19 @@ import java.nio.channels.AsynchronousServerSocketChannel;
 /**
  * @author Steven Ou
  */
-public abstract class AbstractAsyncWebSocketServer<T> extends WebSocketBroadcaster<T> {
+public abstract class AsyncWebSocketServer<T> extends WebSocketBroadcaster<T> {
 
     public static final int MAX_MESSAGE_SIZE = 256;
 
-    public AbstractAsyncWebSocketServer(String bindAddr, int bindPort) throws IOException {
+    TimeoutWatcher<T> timeoutWatcher = new TimeoutWatcher<>();
+
+    public AsyncWebSocketServer(String bindAddr, int bindPort) throws IOException {
         InetSocketAddress sockAddr = new InetSocketAddress(bindAddr, bindPort);
         // Create a socket channel and bind to local bind address
         AsynchronousServerSocketChannel serverSock = AsynchronousServerSocketChannel.open().bind(sockAddr);
         // Start to accept the connection from client
         serverSock.accept(serverSock, new ChannelConnectionHandler<T>(this));
+        System.out.println(STR."Server started on \{bindAddr}:\{bindPort}");
     }
 
     /**
@@ -40,10 +40,28 @@ public abstract class AbstractAsyncWebSocketServer<T> extends WebSocketBroadcast
      * Start to write message to the client
      *
      * @param ws  the socket channel to write messages to
-     * @param buf the buffer containing the message to write
+     * @param buffer the buffer containing the message to write
      */
-    public void startWrite(WebSocketChannel<T> ws, final ByteBuffer buf) {
-        ws.getChannel().write(buf, ws, new ChannelWriteHandler<T>(this));
+    public void startWrite(WebSocketChannel<T> ws, ByteBuffer buffer) {
+        buffer.rewind();
+        ws.getChannel().write(buffer, ws, new ChannelWriteHandler<T>(this));
+    }
+
+    @Override
+    protected void onOpen(WebSocketChannel<T> ws) {
+        System.out.println("New connection opened");
+        timeoutWatcher.watch(ws);
+    }
+
+    @Override
+    protected void onPong(WebSocketChannel<T> ws) {
+        timeoutWatcher.registerPong(ws);
+    }
+
+    @Override
+    protected void onClose(WebSocketChannel<T> ws) {
+        System.out.println("Connection closed");
+        timeoutWatcher.unwatch(ws);
     }
 
     @Override
@@ -52,7 +70,7 @@ public abstract class AbstractAsyncWebSocketServer<T> extends WebSocketBroadcast
             case TEXT -> onMessage(ws, RFC6455.decodeTextFrame(payload));
             case PING -> onPing(ws);
             case PONG -> onPong(ws);
-            case CLOSE -> onClose(ws);
+            case CLOSE -> ws.terminate();
         }
     }
 }
