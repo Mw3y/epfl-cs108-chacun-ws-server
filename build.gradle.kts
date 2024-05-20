@@ -50,3 +50,5 @@ tasks.jar {
         )
     }
 }
+
+gradle.startParameter.showStacktrace = ShowStacktrace.ALWAYS

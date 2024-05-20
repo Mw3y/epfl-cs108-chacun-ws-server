@@ -50,6 +50,22 @@ public class WebSocketChannel<T> {
         sendBytes(RFC6455.encodeCloseFrame(code, reason));
     }
 
+    public void broadcast(String id, String message) {
+        server.broadcastTo(id, RFC6455.encodeTextFrame(message));
+    }
+
+    public void broadcast(String id, ByteBuffer buffer) {
+        server.broadcastTo(id, buffer);
+    }
+
+    public void subscribe(String id) {
+        server.subscribeTo(id, this);
+    }
+
+    public void unsubscribe(String id) {
+        server.unsubscribeFrom(id, this);
+    }
+
     public boolean terminate() {
         try {
             server.onClose(this);

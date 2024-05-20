@@ -55,6 +55,11 @@ public abstract class AsyncWebSocketServer<T> extends WebSocketBroadcaster<T> {
     }
 
     @Override
+    protected void onPing(WebSocketChannel<T> ws) {
+        ws.sendPong();
+    }
+
+    @Override
     protected void onPong(WebSocketChannel<T> ws) {
         timeoutWatcher.registerPong(ws);
     }
