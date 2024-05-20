@@ -5,58 +5,54 @@ import ch.epfl.chacun.server.rfc6455.RFC6455;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
 
 public class WebSocketChannel<T> {
 
-    private final SocketChannel channel;
-    private final WebSocketEventListener<T> listener;
-    private final SelectionKey key;
+    private final AsynchronousSocketChannel channel;
+    private final AsyncWebSocketServer<T> server;
+    private T context;
 
-    public WebSocketChannel(SocketChannel channel, SelectionKey key, WebSocketEventListener<T> listener) {
+    public WebSocketChannel(AsynchronousSocketChannel channel, AsyncWebSocketServer<T> server) {
         this.channel = channel;
-        this.key = key;
-        this.listener = listener;
+        this.server = server;
     }
 
     public void attachContext(T context) {
-        key.attach(context);
+        this.context = context;
     }
 
     /**
      * Returns the underlying SocketChannel.
      * @return The underlying SocketChannel.
      */
-    public SocketChannel getChannel() {
+    public AsynchronousSocketChannel getChannel() {
         return channel;
     }
 
-    @SuppressWarnings("unchecked")
     public T getContext() {
-        return (T) key.attachment();
+        return context;
     }
 
-    public boolean sendText(String message) {
-        return sendBytes(RFC6455.encodeTextFrame(message));
+    public void sendText(String message) {
+        sendBytes(RFC6455.encodeTextFrame(message));
     }
 
-    public boolean sendPing() {
-        return sendBytes(RFC6455.PING);
+    public void sendPing() {
+        sendBytes(RFC6455.PING);
     }
 
-    public boolean sendPong() {
-        return sendBytes(RFC6455.PONG);
+    public void sendPong() {
+        sendBytes(RFC6455.PONG);
     }
 
-    public boolean close(CloseStatusCode code, String reason) {
-        return sendBytes(RFC6455.encodeCloseFrame(code, reason));
+    public void close(CloseStatusCode code, String reason) {
+        sendBytes(RFC6455.encodeCloseFrame(code, reason));
     }
 
     public boolean terminate() {
         try {
-            listener.onClose(this);
-            getChannel().socket().close();
+            server.onClose(this);
             getChannel().close();
             return true;
         } catch (IOException e) {
@@ -64,16 +60,8 @@ public class WebSocketChannel<T> {
         }
     }
 
-    public boolean sendBytes(ByteBuffer buffer) {
-        try {
-            buffer.rewind();
-            channel.write(buffer);
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-            terminate();
-            return false;
-        }
+    public void sendBytes(ByteBuffer buffer) {
+        server.startWrite(this, buffer);
     }
 
     @Override

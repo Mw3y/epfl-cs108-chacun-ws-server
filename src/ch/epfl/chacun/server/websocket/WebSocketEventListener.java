@@ -2,6 +2,8 @@ package ch.epfl.chacun.server.websocket;
 
 import ch.epfl.chacun.server.rfc6455.PayloadData;
 
+import java.nio.channels.AsynchronousSocketChannel;
+
 /**
  * Represents a listener for WebSocket server events.
  */
@@ -49,5 +51,5 @@ public abstract class WebSocketEventListener<T> {
      * @param payload The payload data.
      * @param ws      The channel of the connection.
      */
-    abstract protected void dispatch(PayloadData payload, WebSocketChannel<T> ws);
+    abstract public void dispatch(PayloadData payload, WebSocketChannel<T> ws);
 }
