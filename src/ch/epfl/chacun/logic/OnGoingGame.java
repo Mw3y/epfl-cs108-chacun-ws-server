@@ -11,7 +11,9 @@ import java.util.random.RandomGeneratorFactory;
 import java.util.stream.Collectors;
 
 /**
- * Represents a game lobby.
+ * Represents an ongoing game.
+ * @author Maxence Espagnet (sciper: 372808)
+ * @author Simon Lefort (sciper: 371918)
  */
 public class OnGoingGame {
 
@@ -97,8 +99,12 @@ public class OnGoingGame {
         return gameState;
     }
 
+    /**
+     * Get the players of the game.
+     * @return the players of the game
+     */
     public Map<PlayerColor, String> getPlayers() {
-        return players;
+        return Collections.unmodifiableMap(players);
     }
 
 }

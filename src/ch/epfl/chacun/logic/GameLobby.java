@@ -8,7 +8,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * A builder for creating game lobbies.
+ * Represents a game lobby where players can join before starting a game.
+ * @author Maxence Espagnet (sciper: 372808)
+ * @author Simon Lefort (sciper: 371918)
  */
 public class GameLobby {
 
@@ -21,14 +23,6 @@ public class GameLobby {
      * The list of players in the game lobby.
      */
     private final List<String> players = new ArrayList<>(PlayerColor.ALL.size());
-
-    /**
-     * Create a new game lobby builder with the provided game name.
-     * @param gameName The name of the game.
-     */
-    public GameLobby(String gameName) {
-        this.gameName = gameName;
-    }
 
     /**
      * Create a new game lobby builder with the provided game name and player.
@@ -63,12 +57,13 @@ public class GameLobby {
      * {@code GameLogic.ServerAction.GAMEJOIN_DENY} otherwise.
      */
     public GameActionData addPlayer(String username) {
-        if (players.contains(username)) {
+        // Check if the username is already taken
+        if (players.contains(username))
             return new GameActionData(ServerAction.GAMEJOIN_DENY, "USERNAME_TAKEN");
-        }
-        if (players.size() == PlayerColor.ALL.size()) {
+        // Check if the game is full
+        if (players.size() == PlayerColor.ALL.size())
             return new GameActionData(ServerAction.GAMEJOIN_DENY, "GAME_FULL");
-        }
+        // Add the player to the game lobby
         players.add(username);
         return new GameActionData(ServerAction.GAMEJOIN_ACCEPT, String.join(",", players),
                 new GamePlayerData(gameName, username), true);

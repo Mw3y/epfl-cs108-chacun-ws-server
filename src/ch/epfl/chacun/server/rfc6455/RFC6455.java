@@ -8,6 +8,10 @@ import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Implementation of the WebSocket protocol as defined in RFC 6455.
+ * @author Maxence Espagnet (sciper: 372808)
+ */
 public class RFC6455 {
 
     /**
@@ -41,6 +45,12 @@ public class RFC6455 {
      * PONG control frame.
      */
     public static final ByteBuffer PONG = encodeControlFrame(OpCode.PONG);
+
+    /**
+     * Non-instantiable class.
+     */
+    private RFC6455() {
+    }
 
     /**
      * Encodes a control frame with the provided opcode.

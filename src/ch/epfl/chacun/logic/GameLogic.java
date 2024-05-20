@@ -4,15 +4,30 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents the logic of the game server.
+ * @author Maxence Espagnet (sciper: 372808)
+ * @author Simon Lefort (sciper: 371918)
+ */
 public class GameLogic {
 
+    /**
+     * All the game lobbies currently open.
+     * A game lobby is a group of players waiting for a game to start.
+     */
     private final Map<String, GameLobby> lobbies = new HashMap<>();
 
     /**
-     * The list of games currently running.
+     * All the games currently ongoing.
      */
     private final Map<String, OnGoingGame> games = new HashMap<>();
 
+    /**
+     * Parse and apply an action received by the WebSocket.
+     * @param action The action to parse and apply.
+     * @param context The context of the player sending the action.
+     * @return The response action to send back to the player or broadcast to the game.
+     */
     public GameActionData parseAndApplyWebSocketAction(String action, GamePlayerData context) {
         String[] payload = action.split("\\.");
         System.out.println(Arrays.toString(payload));
@@ -26,6 +41,14 @@ public class GameLogic {
         return null;
     }
 
+    /**
+     * Try to apply the action to a lobby or an ongoing game and determines the response to send.
+     * @param action The action to apply.
+     * @param data The data of the action.
+     * @param gameName The name of the game the player is in.
+     * @param username The username of the player sending the action.
+     * @return The response action to send back to the player or broadcast to the game.
+     */
     private GameActionData applyAction(ServerAction action, String[] data, String gameName, String username) {
         OnGoingGame game = games.get(gameName);
         return switch (action) {

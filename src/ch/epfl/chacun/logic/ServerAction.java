@@ -2,6 +2,8 @@ package ch.epfl.chacun.logic;
 
 /**
  * Represents the possible actions that can be sent by a game client.
+ * @author Maxence Espagnet (sciper: 372808)
+ * @author Simon Lefort (sciper: 371918)
  */
 public enum ServerAction {
     UNKNOWN,
@@ -20,6 +22,11 @@ public enum ServerAction {
         return this.name();
     }
 
+    /**
+     * Convert a string to a ServerAction.
+     * @param action The string to convert.
+     * @return The corresponding ServerAction.
+     */
     public static ServerAction fromString(String action) {
         try {
             return ServerAction.valueOf(action);

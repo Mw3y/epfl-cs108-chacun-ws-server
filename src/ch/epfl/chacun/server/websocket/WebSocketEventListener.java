@@ -2,10 +2,9 @@ package ch.epfl.chacun.server.websocket;
 
 import ch.epfl.chacun.server.rfc6455.PayloadData;
 
-import java.nio.channels.AsynchronousSocketChannel;
-
 /**
  * Represents a listener for WebSocket server events.
+ * @author Maxence Espagnet (sciper: 372808)
  */
 public abstract class WebSocketEventListener<T> {
 

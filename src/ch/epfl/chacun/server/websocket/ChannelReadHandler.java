@@ -7,11 +7,21 @@ import ch.epfl.chacun.server.rfc6455.RFC6455;
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
 
+/**
+ * Handles the asynchronous reading of a message from a WebSocket channel.
+ * @param <T> The type of the context attached to the WebSocket channel.
+ * @author Maxence Espagnet (sciper: 372808)
+ */
 public class ChannelReadHandler<T> implements CompletionHandler<Integer, WebSocketChannel<T>> {
 
     private final AsyncWebSocketServer<T> server;
     private final ByteBuffer payload;
 
+    /**
+     * Create a new read handler for the server.
+     * @param server the server to handle reads for
+     * @param payload the buffer to store the incoming message
+     */
     public ChannelReadHandler(AsyncWebSocketServer<T> server, ByteBuffer payload) {
         this.server = server;
         this.payload = payload;
@@ -60,6 +70,6 @@ public class ChannelReadHandler<T> implements CompletionHandler<Integer, WebSock
     @Override
     public void failed(Throwable exc, WebSocketChannel<T> ws) {
         System.out.println("Failed to read message from client... closing channel");
-        ws.terminate();
+        ws.terminate(); // Close the channel on the server side
     }
 }

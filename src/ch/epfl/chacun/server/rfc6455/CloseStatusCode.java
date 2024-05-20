@@ -2,6 +2,7 @@ package ch.epfl.chacun.server.rfc6455;
 
 /**
  * RFC6455 webSocket close status code.
+ * @author Maxence Espagnet (sciper: 372808)
  */
 public enum CloseStatusCode {
     /**

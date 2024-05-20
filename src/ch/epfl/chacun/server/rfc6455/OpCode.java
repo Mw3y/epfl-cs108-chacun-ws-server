@@ -4,6 +4,7 @@ import java.util.List;
 
 /**
  * Represents the opcode of a WebSocket frame.
+ * @author Maxence Espagnet (sciper: 372808)
  */
 public enum OpCode {
     /**

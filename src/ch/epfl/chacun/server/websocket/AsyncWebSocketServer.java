@@ -10,14 +10,33 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 
 /**
- * @author Steven Ou
+ * An asynchronous WebSocket server that listens for incoming connections and messages from clients.
+ * @author Maxence Espagnet (sciper: 372808)
  */
 public abstract class AsyncWebSocketServer<T> extends WebSocketBroadcaster<T> {
 
+    /**
+     * The maximum size of a message that can be sent or received.
+     */
     public static final int MAX_MESSAGE_SIZE = 256;
 
-    TimeoutWatcher<T> timeoutWatcher = new TimeoutWatcher<>();
+    /**
+     * The interval in milliseconds at which the server sends ping messages to clients.
+     */
+    private static final long PING_INTERVAL = 6 * 1000; // 1 minute
 
+    /**
+     * The timeout watcher that keeps track of the last time a client sent a pong message.
+     */
+    TimeoutWatcher<T> timeoutWatcher = new TimeoutWatcher<>(PING_INTERVAL);
+
+    /**
+     * Create a new asynchronous WebSocket server that listens on the specified address and port.
+     *
+     * @param bindAddr the address to bind to
+     * @param bindPort the port to bind to
+     * @throws IOException if an I/O error occurs
+     */
     public AsyncWebSocketServer(String bindAddr, int bindPort) throws IOException {
         InetSocketAddress sockAddr = new InetSocketAddress(InetAddress.getByName(bindAddr), bindPort);
         // Create a socket channel and bind to local bind address
@@ -28,7 +47,7 @@ public abstract class AsyncWebSocketServer<T> extends WebSocketBroadcaster<T> {
     }
 
     /**
-     * Start to read message from the client
+     * Start reading asynchronously a message from the client.
      *
      * @param ws the socket channel to read messages from
      */
@@ -38,13 +57,13 @@ public abstract class AsyncWebSocketServer<T> extends WebSocketBroadcaster<T> {
     }
 
     /**
-     * Start to write message to the client
+     * Start to write asynchronously a message to the client.
      *
      * @param ws  the socket channel to write messages to
      * @param buffer the buffer containing the message to write
      */
     public void startWrite(WebSocketChannel<T> ws, ByteBuffer buffer) {
-        buffer.rewind();
+        buffer.rewind(); // Rewind the buffer to start reading from the beginning
         ws.getChannel().write(buffer, ws, new ChannelWriteHandler<T>(this));
     }
 
