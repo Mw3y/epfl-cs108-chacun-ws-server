@@ -4,6 +4,7 @@ import ch.epfl.chacun.server.rfc6455.PayloadData;
 import ch.epfl.chacun.server.rfc6455.RFC6455;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
@@ -18,7 +19,7 @@ public abstract class AsyncWebSocketServer<T> extends WebSocketBroadcaster<T> {
     TimeoutWatcher<T> timeoutWatcher = new TimeoutWatcher<>();
 
     public AsyncWebSocketServer(String bindAddr, int bindPort) throws IOException {
-        InetSocketAddress sockAddr = new InetSocketAddress(bindAddr, bindPort);
+        InetSocketAddress sockAddr = new InetSocketAddress(InetAddress.getByName(bindAddr), bindPort);
         // Create a socket channel and bind to local bind address
         AsynchronousServerSocketChannel serverSock = AsynchronousServerSocketChannel.open().bind(sockAddr);
         // Start to accept the connection from client
