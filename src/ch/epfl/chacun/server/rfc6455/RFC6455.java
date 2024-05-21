@@ -30,21 +30,18 @@ public class RFC6455 {
     public static final int FIRST_RSV_POS = 6;
     public static final int FIN_BIT_POS = 7;
     public static final int FIN_MASK = 1 << FIN_BIT_POS;
-
-    /**
-     * Globally Unique Identifier (GUID, [RFC4122]) in string form.
-     */
-    private static final String GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-
     /**
      * PING control frame.
      */
     public static final ByteBuffer PING = encodeControlFrame(OpCode.PING);
-
     /**
      * PONG control frame.
      */
     public static final ByteBuffer PONG = encodeControlFrame(OpCode.PONG);
+    /**
+     * Globally Unique Identifier (GUID, [RFC4122]) in string form.
+     */
+    private static final String GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
     /**
      * Non-instantiable class.
@@ -179,10 +176,8 @@ public class RFC6455 {
      * @return Whether the request is a WebSocket upgrade request.
      */
     public static boolean isUpgradeRequest(String request) {
-        return request.startsWith("GET /") &&
-                request.contains("HTTP/1.1") &&
+        return request.startsWith("GET /") && request.contains("HTTP/1.1") &&
                 request.contains("Upgrade: websocket") &&
-                request.contains("Connection: Upgrade") &&
                 request.contains("Sec-WebSocket-Key: ");
     }
 
@@ -365,6 +360,22 @@ public class RFC6455 {
     }
 
     /**
+     * Whether the mask bit from the second byte of a WebSocket frame is set.
+     * <p>
+     * Mask:  1 bit
+     * <p>
+     * Defines whether the "Payload data" is masked.
+     * If set to 1, a masking key is present in masking-key, and this
+     * is used to unmask the "Payload data" as per Section 5.3.
+     *
+     * @param buffer The buffer containing the WebSocket frame.
+     * @return The value of the mask bit.
+     */
+    public static boolean readIsMasked(ByteBuffer buffer) {
+        return ((buffer.get(1) & IS_MASKED_MASK) >> IS_MASKED_POS) == 1;
+    }
+
+    /**
      * Get the length of the payload data from the second byte of a WebSocket frame.
      * <p>
      * Payload length:  7 bits, 7+16 bits, or 7+64 bits
@@ -390,21 +401,5 @@ public class RFC6455 {
      */
     public int readLength(ByteBuffer buffer) {
         return readLength(buffer, true);
-    }
-
-    /**
-     * Whether the mask bit from the second byte of a WebSocket frame is set.
-     * <p>
-     * Mask:  1 bit
-     * <p>
-     * Defines whether the "Payload data" is masked.
-     * If set to 1, a masking key is present in masking-key, and this
-     * is used to unmask the "Payload data" as per Section 5.3.
-     *
-     * @param buffer The buffer containing the WebSocket frame.
-     * @return The value of the mask bit.
-     */
-    public static boolean readIsMasked(ByteBuffer buffer) {
-        return ((buffer.get(1) & IS_MASKED_MASK) >> IS_MASKED_POS) == 1;
     }
 }
