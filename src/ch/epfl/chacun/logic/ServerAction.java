@@ -15,7 +15,8 @@ public enum ServerAction {
     GAMEACTION_ACCEPT,
     GAMEACTION_DENY,
     GAMEEND,
-    GAMEMSG;
+    GAMEMSG,
+    GAMEMSG_DENY;
 
     @Override
     public String toString() {

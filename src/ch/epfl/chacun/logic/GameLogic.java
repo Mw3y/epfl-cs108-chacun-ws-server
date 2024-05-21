@@ -12,6 +12,11 @@ import java.util.Map;
 public class GameLogic {
 
     /**
+     * The minimum number of players required to start a game.
+     */
+    private static final int MINIMUM_PLAYERS = 2;
+
+    /**
      * All the game lobbies currently open.
      * A game lobby is a group of players waiting for a game to start.
      */
@@ -51,67 +56,91 @@ public class GameLogic {
      */
     private GameActionData applyAction(ServerAction action, String[] data, String gameName, String username) {
         OnGoingGame game = games.get(gameName);
-        return switch (action) {
+        switch (action) {
+            /*
+             * The player tries to join a game lobby.
+             */
             case GAMEJOIN -> {
+                // Check if the provided data is valid
+                if (data.length != 2)
+                    return new GameActionData(ServerAction.GAMEJOIN_DENY, "INVALID_DATA");
+
+                // Extract the game name and the username from the data
                 String providedGameName = data[0];
                 String providedUsername = data[1];
 
-                if (gameName != null) {
-                    // The player is already in a game
-                    yield new GameActionData(ServerAction.GAMEJOIN_DENY, "ALREADY_IN_GAME");
-                }
-
+                // Check if the player is already in a game
+                if (gameName != null)
+                    return new GameActionData(ServerAction.GAMEJOIN_DENY, "ALREADY_IN_GAME");
+                // Check if the lobby already exists
                 GameLobby lobby = lobbies.get(providedGameName);
                 if (lobby != null) {
-                    yield lobby.addPlayer(providedUsername);
+                    return lobby.addPlayer(providedUsername);
                 }
-
+                // Check if the game has already started
                 if (games.get(providedGameName) != null) {
-                    // The game has already started
-                    yield new GameActionData(ServerAction.GAMEJOIN_DENY, "GAME_ALREADY_STARTED");
+                    return new GameActionData(ServerAction.GAMEJOIN_DENY, "GAME_ALREADY_STARTED");
                 }
 
                 // Create a new game lobby
                 lobbies.put(providedGameName, new GameLobby(providedGameName, providedUsername));
-                yield new GameActionData(ServerAction.GAMEJOIN_ACCEPT, providedUsername,
+                return new GameActionData(ServerAction.GAMEJOIN_ACCEPT, providedUsername,
                         new GamePlayerData(providedGameName, providedUsername));
             }
+            /*
+             * The player tries to perform an action in the game.
+             */
             case GAMEACTION -> {
                 GameLobby lobby = lobbies.get(gameName);
-                if (lobby != null && lobby.getPlayers().size() >= 2 && lobby.getPlayers().getFirst().equals(username)) {
+                // Check if the lobby has enough players to start the game.
+                // The game is started if the first player to join plays.
+                if (lobby != null && lobby.getPlayers().size() >= MINIMUM_PLAYERS
+                        && lobby.getPlayers().getFirst().equals(username)) {
                     game = startGameWithLobby(lobby);
                 }
 
-                if (game == null) {
-                    yield new GameActionData(ServerAction.GAMEACTION_DENY, "GAME_NOT_STARTED");
-                }
+                // Check if the game has started
+                if (game == null)
+                    return new GameActionData(ServerAction.GAMEACTION_DENY, "GAME_NOT_STARTED");
 
-                yield game.applyAction(data[0], username);
+                // Try to apply the action to the game
+                return game.applyAction(data[0], username);
             }
+            /*
+             * The player tries to leave a lobby or its current game.
+             */
             case GAMELEAVE -> {
                 GameLobby lobby = lobbies.get(gameName);
-                if (lobby != null) {
-                    yield lobby.removePlayer(username);
-                }
+                // Check if the player is in a lobby
+                if (lobby != null)
+                    return lobby.removePlayer(username);
                 // Check if the game exists and has not ended
                 if (game != null && !game.hasEnded()) {
-                        games.remove(gameName); // Remove the game
-                        yield new GameActionData(
-                                ServerAction.GAMEEND, "PLAYER_LEFT_MIDGAME", true);
+                    games.remove(gameName); // Cancel the game
+                    return new GameActionData(ServerAction.GAMEEND, "PLAYER_LEFT_MIDGAME", true);
                 }
-                yield null;
+                return null;
             }
+            /*
+             * The player tries to send a message to the game.
+             */
             case GAMEMSG -> {
-                if (gameName != null) {
+                // Check if the game exists and the player is in it.
+                if (gameName != null && game != null && game.getPlayers().containsValue(username)) {
                     String message = STR."\{username}=\{data[0]}";
-                    yield new GameActionData(ServerAction.GAMEMSG, message, true);
+                    return new GameActionData(ServerAction.GAMEMSG, message, true);
                 }
-                yield null;
+                return new GameActionData(ServerAction.GAMEMSG_DENY, "GAME_HAS_ENDED");
             }
-            default -> null;
-        };
+        }
+        return null;
     }
 
+    /**
+     * Start a game with the provided lobby content.
+     * @param lobby The lobby to start the game with.
+     * @return The game that has been started.
+     */
     private OnGoingGame startGameWithLobby(GameLobby lobby) {
         OnGoingGame newGame = lobby.startGame();
         games.put(lobby.getGameName(), newGame);
