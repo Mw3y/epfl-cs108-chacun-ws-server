@@ -36,6 +36,7 @@ public class ChannelReadHandler<T> implements CompletionHandler<Integer, WebSock
         }
 
         String content = new String(payload.array());
+        System.out.println("Received message from client: " + content);
         // Check for any incoming HTTP upgrade request
         if (RFC6455.isUpgradeRequest(content)) {
             // Send the upgrade response
