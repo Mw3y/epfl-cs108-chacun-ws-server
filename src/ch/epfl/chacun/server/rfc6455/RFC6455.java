@@ -168,6 +168,7 @@ public class RFC6455 {
         try {
             return unsafeParsePayload(payload.duplicate());
         } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
     }
