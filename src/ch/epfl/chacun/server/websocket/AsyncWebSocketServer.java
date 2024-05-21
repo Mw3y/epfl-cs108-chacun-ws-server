@@ -18,7 +18,7 @@ public abstract class AsyncWebSocketServer<T> extends WebSocketBroadcaster<T> {
     /**
      * The maximum size of a message that can be sent or received.
      */
-    public static final int MAX_MESSAGE_SIZE = 4096;
+    public static final int MAX_MESSAGE_SIZE = 512;
 
     /**
      * The interval in milliseconds at which the server sends ping messages to clients.

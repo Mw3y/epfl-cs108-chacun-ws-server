@@ -60,7 +60,6 @@ public enum OpCode {
      * @return The OpCode matching the provided value or RESERVED by default.
      */
     public static OpCode fromValue(int value) {
-        System.out.println("OpCode.fromValue " + Integer.toBinaryString(value));
         return ALL.stream().filter(op -> op.code == value).findFirst().orElseThrow();
     }
 
