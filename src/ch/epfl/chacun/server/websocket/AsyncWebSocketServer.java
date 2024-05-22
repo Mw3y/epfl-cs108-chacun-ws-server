@@ -23,12 +23,12 @@ public abstract class AsyncWebSocketServer<T> extends WebSocketBroadcaster<T> {
     /**
      * The interval in milliseconds at which the server sends ping messages to clients.
      */
-    private static final long PING_INTERVAL = 6 * 1000; // 1 minute
+    private static final long PING_INTERVAL = 60 * 1000; // 1 minute
 
     /**
      * The timeout watcher that keeps track of the last time a client sent a pong message.
      */
-    TimeoutWatcher<T> timeoutWatcher = new TimeoutWatcher<>(PING_INTERVAL);
+    private final TimeoutWatcher<T> timeoutWatcher = new TimeoutWatcher<>(PING_INTERVAL);
 
     /**
      * Create a new asynchronous WebSocket server that listens on the specified address and port.
