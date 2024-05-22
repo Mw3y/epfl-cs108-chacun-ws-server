@@ -11,38 +11,39 @@ import java.nio.channels.AsynchronousServerSocketChannel;
 
 /**
  * An asynchronous WebSocket server that listens for incoming connections and messages from clients.
+ *
  * @author Maxence Espagnet (sciper: 372808)
  */
 public abstract class AsyncWebSocketServer<T> extends WebSocketBroadcaster<T> {
 
     /**
-     * The maximum size of a message that can be sent or received.
-     */
-    public static final int MAX_MESSAGE_SIZE = 512;
-
-    /**
-     * The interval in milliseconds at which the server sends ping messages to clients.
-     */
-    private static final long PING_INTERVAL = 60 * 1000; // 1 minute
-
-    /**
      * The timeout watcher that keeps track of the last time a client sent a pong message.
      */
-    private final TimeoutWatcher<T> timeoutWatcher = new TimeoutWatcher<>(PING_INTERVAL);
+    private final TimeoutWatcher<T> timeoutWatcher;
+
+    /**
+     * The maximum size of a payload that can be received (in bytes).
+     */
+    private final int maxBufferSize;
 
     /**
      * Create a new asynchronous WebSocket server that listens on the specified address and port.
      *
-     * @param bindAddr the address to bind to
-     * @param bindPort the port to bind to
+     * @param bindAddr      the address to bind to
+     * @param bindPort      the port to bind to
+     * @param maxBufferSize the maximum size of a payload that can be received (in bytes)
+     * @param pingInterval  the interval in milliseconds at which the client should send a pong message
      * @throws IOException if an I/O error occurs
      */
-    public AsyncWebSocketServer(String bindAddr, int bindPort) throws IOException {
+    public AsyncWebSocketServer(String bindAddr, int bindPort, int maxBufferSize, int pingInterval) throws IOException {
         InetSocketAddress sockAddr = new InetSocketAddress(InetAddress.getByName(bindAddr), bindPort);
         // Create a socket channel and bind to local bind address
         AsynchronousServerSocketChannel serverSock = AsynchronousServerSocketChannel.open().bind(sockAddr);
         // Start to accept the connection from client
-        serverSock.accept(serverSock, new ChannelConnectionHandler<T>(this));
+        serverSock.accept(serverSock, new ChannelConnectionHandler<>(this));
+        // Server settings
+        this.maxBufferSize = maxBufferSize;
+        this.timeoutWatcher = new TimeoutWatcher<>(pingInterval);
         System.out.println(STR."Server started on \{bindAddr}:\{bindPort}");
     }
 
@@ -52,19 +53,19 @@ public abstract class AsyncWebSocketServer<T> extends WebSocketBroadcaster<T> {
      * @param ws the socket channel to read messages from
      */
     public void startRead(WebSocketChannel<T> ws) {
-        final ByteBuffer buf = ByteBuffer.allocate(MAX_MESSAGE_SIZE);
-        ws.getChannel().read(buf, ws, new ChannelReadHandler<T>(this, buf));
+        ByteBuffer buf = ByteBuffer.allocate(maxBufferSize); // If the data is larger, it will be considered invalid
+        ws.getChannel().read(buf, ws, new ChannelReadHandler<>(this, buf));
     }
 
     /**
      * Start to write asynchronously a message to the client.
      *
-     * @param ws  the socket channel to write messages to
+     * @param ws     the socket channel to write messages to
      * @param buffer the buffer containing the message to write
      */
     public void startWrite(WebSocketChannel<T> ws, ByteBuffer buffer) {
         buffer.rewind(); // Rewind the buffer to start reading from the beginning
-        ws.getChannel().write(buffer, ws, new ChannelWriteHandler<T>(this));
+        ws.getChannel().write(buffer, ws, new ChannelWriteHandler<>(this));
     }
 
     @Override
@@ -92,6 +93,7 @@ public abstract class AsyncWebSocketServer<T> extends WebSocketBroadcaster<T> {
     @Override
     public void dispatch(PayloadData payload, WebSocketChannel<T> ws) {
         switch (payload.opCode()) {
+            case BINARY -> onBinary(ws, RFC6455.decodeFrame(payload));
             case TEXT -> onMessage(ws, RFC6455.decodeTextFrame(payload));
             case PING -> onPing(ws);
             case PONG -> onPong(ws);

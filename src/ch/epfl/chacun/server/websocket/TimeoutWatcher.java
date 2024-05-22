@@ -24,20 +24,16 @@ public class TimeoutWatcher<T> {
      * Create a new timeout watcher that checks for timeouts every {@code timeoutAfterMs} milliseconds.
      * @param timeoutAfterMs the timeout in milliseconds
      */
-    public TimeoutWatcher(long timeoutAfterMs) {
+    public TimeoutWatcher(int timeoutAfterMs) {
         try (ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1)) {
             executor.scheduleAtFixedRate(() -> {
-                System.out.println("Checking for timeouts");
                 Date lastPing = new Date(new Date().getTime() - timeoutAfterMs);
                 wsDelays.forEach((ws, lastPong) -> {
-                    // If the last pong was received more than 2 * PING_INTERVAL ms after the last ping,
-                    // terminate the connection since the close handshake was not completed
-                    if (lastPing.getTime() - lastPong.getTime() > 2 * timeoutAfterMs) {
+                    // If the last pong was received more than PING_INTERVAL ms after the last ping,
+                    // close the connection from the server side as the client has timed out.
+                    if (lastPing.getTime() - lastPong.getTime() > timeoutAfterMs) {
+                        System.out.println("A client has timed out.");
                         ws.terminate();
-                    }
-                    // If the last pong was received more than PING_INTERVAL ms after the last ping, close the connection
-                    else if (lastPing.getTime() - lastPong.getTime() > timeoutAfterMs) {
-                        ws.close(CloseStatusCode.PROTOCOL_ERROR, "PLAYER_TIMEOUT");
                     }
                     // Otherwise, send a ping
                     else ws.sendPing();

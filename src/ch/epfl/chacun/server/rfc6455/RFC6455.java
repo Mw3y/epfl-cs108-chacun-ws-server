@@ -30,14 +30,17 @@ public class RFC6455 {
     public static final int FIRST_RSV_POS = 6;
     public static final int FIN_BIT_POS = 7;
     public static final int FIN_MASK = 1 << FIN_BIT_POS;
+
     /**
      * PING control frame.
      */
     public static final ByteBuffer PING = encodeControlFrame(OpCode.PING);
+
     /**
      * PONG control frame.
      */
     public static final ByteBuffer PONG = encodeControlFrame(OpCode.PONG);
+
     /**
      * Globally Unique Identifier (GUID, [RFC4122]) in string form.
      */
@@ -62,19 +65,36 @@ public class RFC6455 {
         return buffer.asReadOnlyBuffer();
     }
 
+    /**
+     * Encodes a WebSocket frame close control frame with the provided close status code and reason.
+     * @param code The close status code.
+     * @param reason The close reason.
+     * @return The ByteBuffer containing the WebSocket frame.
+     */
     public static ByteBuffer encodeCloseFrame(CloseStatusCode code, String reason) {
         ByteBuffer buffer = ByteBuffer.allocate(2 + reason.length());
         buffer.putShort((short) code.asNumber());
         byte[] reasonBytes = reason.getBytes();
         buffer.put(reasonBytes);
-        return encodeBytesFrame(OpCode.CLOSE, buffer.array());
+        return encodeFrame(OpCode.CLOSE, buffer.array());
     }
 
+    /**
+     * Encodes a WebSocket frame with the provided text message.
+     * @param message The text message to put in the WebSocket frame.
+     * @return The ByteBuffer containing the WebSocket frame.
+     */
     public static ByteBuffer encodeTextFrame(String message) {
-        return encodeBytesFrame(OpCode.TEXT, message.getBytes());
+        return encodeFrame(OpCode.TEXT, message.getBytes());
     }
 
-    public static ByteBuffer encodeBytesFrame(OpCode opCode, byte[] data) {
+    /**
+     * Encodes a WebSocket frame with the provided opcode and data.
+     * @param opCode The opcode of the WebSocket frame.
+     * @param data The data to put in the WebSocket frame.
+     * @return The ByteBuffer containing the WebSocket frame.
+     */
+    public static ByteBuffer encodeFrame(OpCode opCode, byte[] data) {
         ByteBuffer buffer = ByteBuffer.allocate(4096);
         // Set the FIN bit to 1 and the opcode
         byte firstByte = (byte) (1 << FIN_BIT_POS | opCode.asNumber());
@@ -89,11 +109,11 @@ public class RFC6455 {
     }
 
     /**
-     * Decodes a WebSocket frame into a string.
+     * Decodes a WebSocket frame into a byte array.
      * @param payloadData The payload data of the WebSocket frame.
-     * @return The decoded string.
+     * @return The decoded byte array.
      */
-    public static String decodeTextFrame(PayloadData payloadData) {
+    public static byte[] decodeFrame(PayloadData payloadData) {
         ByteBuffer data = payloadData.data();
         if (payloadData.isMasked()) {
             byte[] dataBytes = new byte[payloadData.length()];
@@ -106,9 +126,18 @@ public class RFC6455 {
             // Allow the data to be read again
             data.position(0);
             // Convert the data to a string
-            return new String(dataBytes);
+            return dataBytes;
         }
-        return new String(data.array());
+        return data.array();
+    }
+
+    /**
+     * Decodes a WebSocket frame into a string.
+     * @param payloadData The payload data of the WebSocket frame.
+     * @return The decoded string.
+     */
+    public static String decodeTextFrame(PayloadData payloadData) {
+        return new String(decodeFrame(payloadData));
     }
 
     /**

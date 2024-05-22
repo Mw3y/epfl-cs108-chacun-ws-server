@@ -16,12 +16,20 @@ public abstract class WebSocketEventListener<T> {
     abstract protected void onOpen(WebSocketChannel<T> ws);
 
     /**
-     * Called when a message is received.
+     * Called when a text message is received.
      *
      * @param ws      The channel of the connection.
      * @param message The message received.
      */
     abstract protected void onMessage(WebSocketChannel<T> ws, String message);
+
+    /**
+     * Called when a binary message is received.
+     *
+     * @param ws      The channel of the connection.
+     * @param message The message received.
+     */
+    abstract protected void onBinary(WebSocketChannel<T> ws, byte[] message);
 
     /**
      * Called when a ping is received.
