@@ -126,7 +126,7 @@ public class GameLogic {
              */
             case GAMEMSG -> {
                 // Check if the game exists and the player is in it.
-                if (gameName != null && game != null && game.getPlayers().containsValue(username)) {
+                if (gameName != null) {
                     String message = STR."\{username}=\{data[0]}";
                     return new GameActionData(ServerAction.GAMEMSG, message, true);
                 }
