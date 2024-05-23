@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 /**
  * Represents an ongoing game.
+ *
  * @author Maxence Espagnet (sciper: 372808)
  * @author Simon Lefort (sciper: 371918)
  */
@@ -39,8 +40,9 @@ public class OnGoingGame {
 
     /**
      * Create a new game lobby with the provided game name and players.
+     *
      * @param gameName The name of the game.
-     * @param players The players of the game
+     * @param players  The players of the game
      */
     public OnGoingGame(String gameName, Map<PlayerColor, String> players) {
         List<PlayerColor> playerColors = players.keySet().stream().sorted().toList();
@@ -63,7 +65,8 @@ public class OnGoingGame {
 
     /**
      * Apply the given action to the game state.
-     * @param action the action to apply
+     *
+     * @param action   the action to apply
      * @param username the username of the player who sent the action
      * @return the result of the action
      */
@@ -73,9 +76,7 @@ public class OnGoingGame {
             ActionEncoder.StateAction stateAction = ActionEncoder.decodeAndApply(gameState, action);
             if (stateAction != null) {
                 gameState = stateAction.gameState();
-                if (hasEnded()) {
-                    return new GameActionData(ServerAction.GAMEEND, "PLAYER_HAS_WON", true);
-                }
+                // If the action was valid, broadcast it to all players
                 return new GameActionData(ServerAction.GAMEACTION_ACCEPT, action, true);
             }
             return new GameActionData(ServerAction.GAMEACTION_DENY, "INVALID_ACTION");
@@ -85,6 +86,7 @@ public class OnGoingGame {
 
     /**
      * Whether the game has ended.
+     *
      * @return true if the game has ended, false otherwise
      */
     public boolean hasEnded() {
@@ -93,6 +95,7 @@ public class OnGoingGame {
 
     /**
      * Get the game state.
+     *
      * @return the game state
      */
     public GameState getGameState() {
@@ -100,7 +103,26 @@ public class OnGoingGame {
     }
 
     /**
+     * Get the name of the game.
+     *
+     * @return the name of the game
+     */
+    public String getName() {
+        return gameName;
+    }
+
+    /**
+     * Get the seed used to shuffle the tiles.
+     *
+     * @return the seed used to shuffle the tiles
+     */
+    public int getSeed() {
+        return seed;
+    }
+
+    /**
      * Get the players of the game.
+     *
      * @return the players of the game
      */
     public Map<PlayerColor, String> getPlayers() {
