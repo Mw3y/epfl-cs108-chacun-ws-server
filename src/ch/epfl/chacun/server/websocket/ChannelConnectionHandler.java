@@ -6,6 +6,7 @@ import java.nio.channels.CompletionHandler;
 
 /**
  * Handles the connection of a new client to the server.
+ *
  * @param <T> The type of the context attached to the WebSocket channel.
  * @author Maxence Espagnet (sciper: 372808)
  */
@@ -15,6 +16,7 @@ public class ChannelConnectionHandler<T> implements CompletionHandler<Asynchrono
 
     /**
      * Create a new connection handler for the server.
+     *
      * @param server the server to handle connections for
      */
     public ChannelConnectionHandler(AsyncWebSocketServer<T> server) {

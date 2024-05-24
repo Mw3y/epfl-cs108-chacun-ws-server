@@ -8,6 +8,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A class to allow broadcasting messages to WebSocket channels subscribed to a specific identifier.
+ *
  * @param <T> The type of the context attached to the WebSocket channel.
  * @author Maxence Espagnet (sciper: 372808)
  */
@@ -20,7 +21,8 @@ public abstract class WebSocketBroadcaster<T> extends WebSocketEventListener<T> 
 
     /**
      * Subscribe a WebSocket channel to a broadcast channel.
-     * @param id the identifier of the broadcast channel to subscribe to
+     *
+     * @param id      the identifier of the broadcast channel to subscribe to
      * @param channel the WebSocket channel to subscribe
      */
     void subscribeTo(String id, WebSocketChannel<T> channel) {
@@ -30,7 +32,8 @@ public abstract class WebSocketBroadcaster<T> extends WebSocketEventListener<T> 
 
     /**
      * Unsubscribe a WebSocket channel from a broadcast channel.
-     * @param id the identifier of the broadcast channel to unsubscribe from
+     *
+     * @param id      the identifier of the broadcast channel to unsubscribe from
      * @param channel the WebSocket channel to unsubscribe
      */
     void unsubscribeFrom(String id, WebSocketChannel<T> channel) {
@@ -46,7 +49,8 @@ public abstract class WebSocketBroadcaster<T> extends WebSocketEventListener<T> 
 
     /**
      * Broadcast a byte buffer content to all WebSocket channels subscribed to an identifier.
-     * @param id the identifier of the broadcast channel
+     *
+     * @param id     the identifier of the broadcast channel
      * @param buffer the byte buffer to broadcast
      */
     void broadcastTo(String id, ByteBuffer buffer) {

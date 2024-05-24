@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 
 /**
  * Implementation of the WebSocket protocol as defined in RFC 6455.
+ *
  * @author Maxence Espagnet (sciper: 372808)
  */
 public class RFC6455 {
@@ -54,6 +55,7 @@ public class RFC6455 {
 
     /**
      * Encodes a control frame with the provided opcode.
+     *
      * @param opCode The opcode of the control frame.
      * @return The ByteBuffer containing the control frame.
      */
@@ -67,7 +69,8 @@ public class RFC6455 {
 
     /**
      * Encodes a WebSocket frame close control frame with the provided close status code and reason.
-     * @param code The close status code.
+     *
+     * @param code   The close status code.
      * @param reason The close reason.
      * @return The ByteBuffer containing the WebSocket frame.
      */
@@ -81,6 +84,7 @@ public class RFC6455 {
 
     /**
      * Encodes a WebSocket frame with the provided text message.
+     *
      * @param message The text message to put in the WebSocket frame.
      * @return The ByteBuffer containing the WebSocket frame.
      */
@@ -90,8 +94,9 @@ public class RFC6455 {
 
     /**
      * Encodes a WebSocket frame with the provided opcode and data.
+     *
      * @param opCode The opcode of the WebSocket frame.
-     * @param data The data to put in the WebSocket frame.
+     * @param data   The data to put in the WebSocket frame.
      * @return The ByteBuffer containing the WebSocket frame.
      */
     public static ByteBuffer encodeFrame(OpCode opCode, byte[] data) {
@@ -110,6 +115,7 @@ public class RFC6455 {
 
     /**
      * Decodes a WebSocket frame into a byte array.
+     *
      * @param payloadData The payload data of the WebSocket frame.
      * @return The decoded byte array.
      */
@@ -133,6 +139,7 @@ public class RFC6455 {
 
     /**
      * Decodes a WebSocket frame into a string.
+     *
      * @param payloadData The payload data of the WebSocket frame.
      * @return The decoded string.
      */
@@ -142,6 +149,7 @@ public class RFC6455 {
 
     /**
      * Extracts the data of a WebSocket frame.
+     *
      * @param payload The payload data of the WebSocket frame.
      * @return The parsed payload data.
      */
@@ -187,6 +195,7 @@ public class RFC6455 {
 
     /**
      * Parses the payload data of a WebSocket frame.
+     *
      * @param payload The payload data of the WebSocket frame.
      * @return The parsed payload data.
      */
@@ -200,6 +209,7 @@ public class RFC6455 {
 
     /**
      * Checks if the request is a WebSocket upgrade request.
+     *
      * @param request The HTTP request.
      * @return Whether the request is a WebSocket upgrade request.
      */
@@ -273,6 +283,7 @@ public class RFC6455 {
 
     /**
      * Encodes the length of the payload data.
+     *
      * @param length The length of the payload data.
      * @return The byte array containing the length data.
      */
@@ -370,7 +381,8 @@ public class RFC6455 {
 
     /**
      * Get the length of the payload data from the second byte of a WebSocket frame.
-     * @param buffer The buffer containing the WebSocket frame.
+     *
+     * @param buffer             The buffer containing the WebSocket frame.
      * @param immutableOperation Whether the buffer position should change or not.
      * @return The length of the payload data.
      */

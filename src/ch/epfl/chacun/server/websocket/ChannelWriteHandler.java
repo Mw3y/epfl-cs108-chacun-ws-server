@@ -4,6 +4,7 @@ import java.nio.channels.CompletionHandler;
 
 /**
  * Handles the asynchronous writing of a message to a WebSocket channel.
+ *
  * @param <T> The type of the context attached to the WebSocket channel.
  * @author Maxence Espagnet (sciper: 372808)
  */
@@ -13,6 +14,7 @@ public class ChannelWriteHandler<T> implements CompletionHandler<Integer, WebSoc
 
     /**
      * Create a new write handler for the server.
+     *
      * @param server the server to handle writes for
      */
     public ChannelWriteHandler(AsyncWebSocketServer<T> server) {

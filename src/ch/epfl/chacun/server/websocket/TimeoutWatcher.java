@@ -1,7 +1,5 @@
 package ch.epfl.chacun.server.websocket;
 
-import ch.epfl.chacun.server.rfc6455.CloseStatusCode;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A class that watches WebSocket channels for timeouts.
+ *
  * @param <T> The type of the context attached to the WebSocket channel.
  * @author Maxence Espagnet (sciper: 372808)
  */
@@ -22,6 +21,7 @@ public class TimeoutWatcher<T> {
 
     /**
      * Create a new timeout watcher that checks for timeouts every {@code timeoutAfterMs} milliseconds.
+     *
      * @param timeoutAfterMs the timeout in milliseconds
      */
     public TimeoutWatcher(int timeoutAfterMs) {
@@ -44,6 +44,7 @@ public class TimeoutWatcher<T> {
 
     /**
      * Watch a WebSocket channel for timeouts.
+     *
      * @param ws the WebSocket channel to watch
      */
     public void watch(WebSocketChannel<T> ws) {
@@ -52,6 +53,7 @@ public class TimeoutWatcher<T> {
 
     /**
      * Stop watching a WebSocket channel for timeouts.
+     *
      * @param ws the WebSocket channel to stop watching
      */
     public void unwatch(WebSocketChannel<T> ws) {
@@ -60,6 +62,7 @@ public class TimeoutWatcher<T> {
 
     /**
      * Register a pong message from a WebSocket channel.
+     *
      * @param ws the WebSocket channel that sent the pong
      */
     public void registerPong(WebSocketChannel<T> ws) {

@@ -4,6 +4,7 @@ import ch.epfl.chacun.server.rfc6455.PayloadData;
 
 /**
  * Represents a listener for WebSocket server events.
+ *
  * @author Maxence Espagnet (sciper: 372808)
  */
 public abstract class WebSocketEventListener<T> {

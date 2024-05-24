@@ -9,6 +9,7 @@ import java.nio.channels.CompletionHandler;
 
 /**
  * Handles the asynchronous reading of a message from a WebSocket channel.
+ *
  * @param <T> The type of the context attached to the WebSocket channel.
  * @author Maxence Espagnet (sciper: 372808)
  */
@@ -19,7 +20,8 @@ public class ChannelReadHandler<T> implements CompletionHandler<Integer, WebSock
 
     /**
      * Create a new read handler for the server.
-     * @param server the server to handle reads for
+     *
+     * @param server  the server to handle reads for
      * @param payload the buffer to store the incoming message
      */
     public ChannelReadHandler(AsyncWebSocketServer<T> server, ByteBuffer payload) {

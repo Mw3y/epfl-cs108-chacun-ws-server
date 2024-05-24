@@ -4,6 +4,7 @@ import java.util.List;
 
 /**
  * Represents the opcode of a WebSocket frame.
+ *
  * @author Maxence Espagnet (sciper: 372808)
  */
 public enum OpCode {
@@ -48,6 +49,7 @@ public enum OpCode {
 
     /**
      * Create a new OpCode with the provided value.
+     *
      * @param code The value of the OpCode.
      */
     OpCode(int code) {
@@ -56,6 +58,7 @@ public enum OpCode {
 
     /**
      * Get the OpCode matching the provided value or RESERVED by default.
+     *
      * @param value The value of the OpCode.
      * @return The OpCode matching the provided value or RESERVED by default.
      */
@@ -65,6 +68,7 @@ public enum OpCode {
 
     /**
      * Get the value of the OpCode.
+     *
      * @return The value of the OpCode.
      */
     public int asNumber() {
