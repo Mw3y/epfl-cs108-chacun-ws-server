@@ -108,6 +108,9 @@ public class GameLogic {
                 // Check if the game has started
                 if (game == null)
                     return new GameActionData(ServerAction.GAMEACTION_DENY, "GAME_NOT_STARTED");
+                // Check if there's an action to perform
+                if (data.length != 1)
+                    return new GameActionData(ServerAction.GAMEACTION_DENY, "INVALID_DATA");
 
                 // Try to apply the action to the game
                 GameActionData nextServerAction = game.applyAction(data[0], username);
@@ -137,6 +140,10 @@ public class GameLogic {
             case GAMEMSG -> {
                 // Check if the game exists and the player is in it.
                 if (game != null || lobby != null) {
+                    // Check if there's a message
+                    if (data.length != 1)
+                        return new GameActionData(ServerAction.GAMEMSG_DENY, "INVALID_DATA");
+                    // Attach the username to the message
                     String message = STR."\{username}=\{data[0]}";
                     return new GameActionData(ServerAction.GAMEMSG, message, true);
                 }
