@@ -53,8 +53,8 @@ public abstract class AsyncWebSocketServer<T> extends WebSocketBroadcaster<T> {
      * @param ws the socket channel to read messages from
      */
     public void startRead(WebSocketChannel<T> ws) {
-        ByteBuffer buf = ByteBuffer.allocate(maxBufferSize); // If the data is larger, it will be considered invalid
-        ws.getChannel().read(buf, ws, new ChannelReadHandler<>(this, buf));
+        ByteBuffer buffer = ByteBuffer.allocate(maxBufferSize); // If the data is larger, it will be considered invalid
+        ws.getAsyncChannel().read(buffer, ws, new ChannelReadHandler<>(this, buffer));
     }
 
     /**
@@ -65,7 +65,7 @@ public abstract class AsyncWebSocketServer<T> extends WebSocketBroadcaster<T> {
      */
     public void startWrite(WebSocketChannel<T> ws, ByteBuffer buffer) {
         buffer.rewind(); // Rewind the buffer to start reading from the beginning
-        ws.getChannel().write(buffer, ws, new ChannelWriteHandler<>(this));
+        ws.getAsyncChannel().write(buffer, ws, new ChannelWriteHandler<>(this));
     }
 
     @Override

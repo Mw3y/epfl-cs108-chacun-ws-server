@@ -62,7 +62,7 @@ public class WebSocketChannel<T> {
      *
      * @return The underlying AsynchronousSocketChannel.
      */
-    public AsynchronousSocketChannel getChannel() {
+    AsynchronousSocketChannel getAsyncChannel() {
         return channel;
     }
 
@@ -155,10 +155,10 @@ public class WebSocketChannel<T> {
      */
     public void terminate() {
         // Close the channel on the server side only if it is still open
-        if (getChannel().isOpen()) {
+        if (channel.isOpen()) {
             try {
                 server.onClose(this);
-                getChannel().close();
+                channel.close();
             } catch (IOException _) {
                 // Ignore
             }
