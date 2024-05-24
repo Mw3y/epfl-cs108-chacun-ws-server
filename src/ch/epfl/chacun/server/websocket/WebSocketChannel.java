@@ -9,6 +9,7 @@ import java.nio.channels.AsynchronousSocketChannel;
 
 /**
  * Represents a WebSocket channel between the server and a client.
+ *
  * @param <T> The type of the context attached to the WebSocket channel.
  * @author Maxence Espagnet (sciper: 372808)
  */
@@ -31,8 +32,9 @@ public class WebSocketChannel<T> {
 
     /**
      * Create a new WebSocket channel with the given AsynchronousSocketChannel and server.
+     *
      * @param channel The AsynchronousSocketChannel.
-     * @param server The server managing the WebSocket channel.
+     * @param server  The server managing the WebSocket channel.
      */
     public WebSocketChannel(AsynchronousSocketChannel channel, AsyncWebSocketServer<T> server) {
         this.channel = channel;
@@ -41,6 +43,7 @@ public class WebSocketChannel<T> {
 
     /**
      * Attach a context to the WebSocket channel.
+     *
      * @param context The context to attach.
      */
     public void attachContext(T context) {
@@ -56,6 +59,7 @@ public class WebSocketChannel<T> {
 
     /**
      * Returns the underlying AsynchronousSocketChannel.
+     *
      * @return The underlying AsynchronousSocketChannel.
      */
     public AsynchronousSocketChannel getChannel() {
@@ -64,6 +68,7 @@ public class WebSocketChannel<T> {
 
     /**
      * Send a byte buffer to the client through the WebSocket channel.
+     *
      * @param buffer The byte buffer to send
      */
     public void sendBytes(ByteBuffer buffer) {
@@ -72,6 +77,7 @@ public class WebSocketChannel<T> {
 
     /**
      * Send a text message to the client through the WebSocket channel.
+     *
      * @param message The text message to send.
      */
     public void sendText(String message) {
@@ -96,7 +102,8 @@ public class WebSocketChannel<T> {
      * Send a close control frame to the client through the WebSocket channel.
      * <p>
      * This starts the closing handshake with the client.
-     * @param code The close status code.
+     *
+     * @param code   The close status code.
      * @param reason The close reason.
      */
     public void close(CloseStatusCode code, String reason) {
@@ -105,7 +112,8 @@ public class WebSocketChannel<T> {
 
     /**
      * Broadcast a text message to all clients subscribed to the given broadcast channel id.
-     * @param id The broadcast channel id.
+     *
+     * @param id      The broadcast channel id.
      * @param message The text message to broadcast.
      */
     public void broadcast(String id, String message) {
@@ -114,7 +122,8 @@ public class WebSocketChannel<T> {
 
     /**
      * Broadcast a byte buffer to all clients subscribed to the given broadcast channel id.
-     * @param id The broadcast channel id.
+     *
+     * @param id     The broadcast channel id.
      * @param buffer The byte buffer to broadcast.
      */
     public void broadcast(String id, ByteBuffer buffer) {
@@ -123,6 +132,7 @@ public class WebSocketChannel<T> {
 
     /**
      * Subscribe to a broadcast channel with the given id.
+     *
      * @param id The broadcast channel id.
      */
     public void subscribe(String id) {
@@ -131,6 +141,7 @@ public class WebSocketChannel<T> {
 
     /**
      * Unsubscribe from a broadcast channel with the given id.
+     *
      * @param id The broadcast channel id.
      */
     public void unsubscribe(String id) {
@@ -141,15 +152,16 @@ public class WebSocketChannel<T> {
      * Terminate the WebSocket channel on the server side.
      * <p>
      * This is the last part of the closing handshake.
-     * @return {@code true} if the channel was successfully terminated, {@code false} otherwise.
      */
-    public boolean terminate() {
-        try {
-            server.onClose(this);
-            getChannel().close();
-            return true;
-        } catch (IOException e) {
-            return false;
+    public void terminate() {
+        // Close the channel on the server side only if it is still open
+        if (getChannel().isOpen()) {
+            try {
+                server.onClose(this);
+                getChannel().close();
+            } catch (IOException _) {
+                // Ignore
+            }
         }
     }
 
