@@ -1,11 +1,10 @@
 package ch.epfl.chacun.server.websocket;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A class to allow broadcasting messages to WebSocket channels subscribed to a specific identifier.
@@ -17,7 +16,7 @@ public abstract class WebSocketBroadcaster<T> extends WebSocketEventListener<T> 
     /**
      * The map of WebSocket channels subscribed to an identifier.
      */
-    private final Map<String, List<WebSocketChannel<T>>> channels = new ConcurrentHashMap<>();
+    private final Map<String, List<WebSocketChannel<T>>> channels = new HashMap<>();
 
     /**
      * Subscribe a WebSocket channel to a broadcast channel.
@@ -25,7 +24,8 @@ public abstract class WebSocketBroadcaster<T> extends WebSocketEventListener<T> 
      * @param channel the WebSocket channel to subscribe
      */
     void subscribeTo(String id, WebSocketChannel<T> channel) {
-        channels.computeIfAbsent(id, _ -> new ArrayList<>()).add(channel);
+        // Use CopyOnWriteArrayList to prevent a broadcast from throwing if a player joins or leaves the game
+        channels.computeIfAbsent(id, _ -> new CopyOnWriteArrayList<>()).add(channel);
     }
 
     /**
@@ -52,12 +52,8 @@ public abstract class WebSocketBroadcaster<T> extends WebSocketEventListener<T> 
     void broadcastTo(String id, ByteBuffer buffer) {
         if (channels.containsKey(id)) {
             List<WebSocketChannel<T>> channelList = channels.get(id);
-            synchronized (channelList) {
-                Iterator<WebSocketChannel<T>> iterator = channelList.iterator();
-                while (iterator.hasNext()) {
-                    WebSocketChannel<T> channel = iterator.next();
-                    channel.sendBytes(buffer);
-                }
+            for (WebSocketChannel<T> channel : channelList) {
+                channel.sendBytes(buffer);
             }
         }
     }
