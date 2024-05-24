@@ -18,6 +18,8 @@ public class WebSocketServer extends AsyncWebSocketServer<GamePlayerData> {
 
     /**
      * The maximum size of a message that can be sent or received.
+     * <p>
+     * Should be a multiple of 2.
      */
     public static final int MAX_MESSAGE_SIZE = 512;
 

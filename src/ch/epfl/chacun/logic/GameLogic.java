@@ -127,8 +127,7 @@ public class GameLogic {
                 if (game != null && !game.hasEnded()) {
                     // Cancel the game and put everyone back in the lobby
                     GameLobby newLobby = downgradeGameToLobby(game);
-                    newLobby.removePlayer(username);
-                    return new GameActionData(ServerAction.GAMEEND, "PLAYER_LEFT_MIDGAME", true);
+                    return newLobby.removePlayer(username);
                 }
                 return null;
             }
