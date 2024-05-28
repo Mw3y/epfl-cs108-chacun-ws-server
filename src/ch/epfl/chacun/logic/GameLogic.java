@@ -37,7 +37,7 @@ public class GameLogic {
      * @param context The context of the player sending the action.
      * @return The response action to send back to the player or broadcast to the game.
      */
-    public GameActionData parseAndApplyWebSocketAction(String action, GamePlayerData context) {
+    public GameActionData parseAndApplyAction(String action, GamePlayerData context) {
         String[] payload = action.split("\\.");
         System.out.println(Arrays.toString(payload));
         ServerAction serverAction = ServerAction.fromString(payload[0]);

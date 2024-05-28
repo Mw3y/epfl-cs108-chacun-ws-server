@@ -45,17 +45,14 @@ public class WebSocketServer extends AsyncWebSocketServer<GamePlayerData> {
 
     @Override
     protected void onMessage(WebSocketChannel<GamePlayerData> ws, String message) {
-        GameActionData action = gameLogic.parseAndApplyWebSocketAction(message, ws.getContext());
+        GameActionData action = gameLogic.parseAndApplyAction(message, ws.getContext());
         if (action != null) {
             // Keep the context attached to the WebSocket channel for future use
             if (action.ctx() != null) {
-                ws.subscribe(action.ctx().gameName());
+                ws.subscribe(action.ctx().gameName()); // Subscribe to the game events
                 ws.attachContext(action.ctx());
             }
-            if (action.shouldBeBroadcasted()) // Broadcast the action if needed
-                ws.broadcast(ws.getContext().gameName(), action.toGameActionString());
-            else // Send the response action to the client
-                ws.sendText(action.toGameActionString());
+            broadcastIfNeededOrSend(ws, action);
         }
     }
 
@@ -67,15 +64,24 @@ public class WebSocketServer extends AsyncWebSocketServer<GamePlayerData> {
 
     @Override
     protected void onClose(WebSocketChannel<GamePlayerData> ws) {
-        GameActionData action = gameLogic.parseAndApplyWebSocketAction(ServerAction.GAMELEAVE.toString(), ws.getContext());
+        GameActionData action = gameLogic.parseAndApplyAction(ServerAction.GAMELEAVE.toString(), ws.getContext());
         if (action != null) {
-            // Unsubscribe the WebSocket channel from the game
-            ws.unsubscribe(ws.getContext().gameName());
-            // Broadcast the action if needed
-            if (action.shouldBeBroadcasted())
-                ws.broadcast(ws.getContext().gameName(), action.toGameActionString());
+            ws.unsubscribe(ws.getContext().gameName()); // Unsubscribe from the game events
+            broadcastIfNeededOrSend(ws, action);
         }
         super.onClose(ws);
+    }
+
+    /**
+     * Broadcast the action to the game if needed or send it directly to the player.
+     * @param ws    The WebSocket channel to send the action to.
+     * @param action The action to send.
+     */
+    private void broadcastIfNeededOrSend(WebSocketChannel<GamePlayerData> ws, GameActionData action) {
+        if (action.shouldBeBroadcasted())
+            ws.broadcast(ws.getContext().gameName(), action.toGameActionString());
+        else
+            ws.sendText(action.toGameActionString());
     }
 }
 
