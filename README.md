@@ -22,9 +22,12 @@ ChaCuN is designed to be played by 2 to 5 players, each aiming to build a prehis
 side by side. The different parts of the landscape, for example, forests, rivers, etc., can be occupied by hunters,
 gatherers, or fishermen to earn points.
 
+## 🔗 Multiplayer game client
+The multiplayer version of ChaCuN is available at [https://github.com/simon-valerio-epfl/ChaCuN](https://github.com/simon-valerio-epfl/ChaCuN). Try it with your friends ;)
+
 ## 🚀 Overview
 
-This WebSocket server allows up to 5 players to play together (and remotely!) a game of ChaCuN. Originally, this was not
+This WebSocket server allows up to 5 players per ChaCuN game to play together (and remotely!). Originally, this was not
 possible, as the game was designed to be played on a single computer.
 
 ### Key Features and Benefits
